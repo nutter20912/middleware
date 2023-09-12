@@ -1,0 +1,27 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+
+type Query {
+  posts: [Post]!
+  user: User!
+}
+
+type Mutation {
+  login(input: LoginRequest!): LoginResponse!
+  createPost(input: NewPost!): Post!
+}
+
+input LoginRequest {
+  email: String!
+  password: String!
+}
+
+type LoginResponse {
+  token: String!
+}
+
+input NewPost {
+  title: String!
+  content: String!
+}
