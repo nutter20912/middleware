@@ -3,11 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
+	"middleware/graph/resolver"
 
-	"github.com/go-micro/plugins/v4/registry/consul"
-	"go-micro.dev/v4"
+	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/gin-gonic/gin"
 	"go-micro.dev/v4/metadata"
-	"go-micro.dev/v4/registry"
 	"go-micro.dev/v4/server"
 )
 
@@ -26,35 +27,21 @@ func logWrapper(fn server.HandlerFunc) server.HandlerFunc {
 	}
 }
 
-func main() {
-	service := micro.NewService()
-	re := consul.NewRegistry(registry.Addrs(":8500"))
+func graphqlHandler() gin.HandlerFunc {
+	h := handler.NewDefaultServer(resolver.NewExecutableSchema(resolver.Config{Resolvers: &resolver.Resolver{}}))
 
-	service.Init(
-		// micro.Server(getHttpServer()),
-		micro.Registry(re),
-		micro.WrapHandler(logWrapper),
-	)
-
-	service.Run()
+	return gin.WrapH(h)
 }
 
-// func getHttpServer() server.Server {
-// 	srv := apiServer.NewServer(
-// 		server.Name("srv.gql"),
-// 		server.Address(fmt.Sprintf(":%v", defaultPort)),
-// 		server.WrapHandler(logWrapper),
-// 	)
-//
-// 	h := serviceHander.NewDefaultServer(handler.NewExecutableSchema(handler.Config{Resolvers: &handler.Resolver{}}))
-//
-// 	srv.HandleFunc("/", h)
-//
-// 	return srv
-// }
+func playgroundHandler() gin.HandlerFunc {
+	h := playground.Handler("GraphQL", "/query")
 
-// func initRouter(router *gin.Engine) {
-// 	srv := serviceHander.NewDefaultServer(handler.NewExecutableSchema(handler.Config{Resolvers: &handler.Resolver{}}))
-// 	router.GET("/", gin.WrapH(playground.Handler("GraphQL playground", "/query")))
-// 	router.POST("/query", gin.WrapH(srv))
-// }
+	return gin.WrapH(h)
+}
+
+func main() {
+	r := gin.Default()
+	r.POST("/query", graphqlHandler())
+	r.GET("/", playgroundHandler())
+	r.Run(fmt.Sprintf(":%v", defaultPort))
+}
