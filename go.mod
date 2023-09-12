@@ -5,9 +5,7 @@ go 1.20
 require (
 	github.com/99designs/gqlgen v0.17.37
 	github.com/envoyproxy/protoc-gen-validate v0.9.1
-	github.com/go-micro/plugins/v4/client/grpc v1.2.1
 	github.com/go-micro/plugins/v4/registry/consul v1.2.1
-	github.com/vektah/gqlparser/v2 v2.5.9
 	go-micro.dev/v4 v4.10.2
 	google.golang.org/grpc v1.53.0
 	google.golang.org/protobuf v1.30.0
@@ -61,6 +59,7 @@ require (
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sergi/go-diff v1.3.1 // indirect
 	github.com/urfave/cli/v2 v2.25.5 // indirect
+	github.com/vektah/gqlparser/v2 v2.5.9 // indirect
 	github.com/xanzy/ssh-agent v0.3.0 // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
 	golang.org/x/crypto v0.0.0-20220315160706-3147a52a75dd // indirect
