@@ -5,6 +5,9 @@ gql:
 	go generate ./...
 
 .PHONY: debug
-debug:
-	dlv debug $(path) --headless --listen=:12345 --api-version=2
-
+debug::
+ifeq ($(strip $(path)),)
+	$(error 請輸入 path)
+endif
+debug::
+	dlv debug $(path) --headless --listen=:12346 --api-version=2

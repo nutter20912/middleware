@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"middleware/graph/resolver"
+	"middleware/middleware"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
@@ -41,7 +42,10 @@ func playgroundHandler() gin.HandlerFunc {
 
 func main() {
 	r := gin.Default()
+	r.Use(middleware.GinContextToContextMiddleware())
+
 	r.POST("/query", graphqlHandler())
 	r.GET("/", playgroundHandler())
+
 	r.Run(fmt.Sprintf(":%v", defaultPort))
 }

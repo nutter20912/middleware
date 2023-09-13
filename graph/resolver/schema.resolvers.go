@@ -6,8 +6,12 @@ package resolver
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"middleware/api/grpc"
 	"middleware/graph/model"
+
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 // Login is the resolver for the login field.
@@ -27,7 +31,21 @@ func (r *queryResolver) Posts(ctx context.Context) ([]*model.Post, error) {
 
 // User is the resolver for the user field.
 func (r *queryResolver) User(ctx context.Context) (*model.User, error) {
-	panic(fmt.Errorf("not implemented: User - user"))
+	rsp, err := grpc.NewUserServiceClient().Get(ctx, &emptypb.Empty{})
+	if err != nil {
+		return nil, err
+	} else {
+		fmt.Println(rsp)
+	}
+
+	rspString, _ := json.Marshal(rsp.Data)
+
+	var user model.User
+	if err = json.Unmarshal(rspString, &user); err != nil {
+		return nil, err
+	}
+
+	return &user, nil
 }
 
 // Mutation returns MutationResolver implementation.
