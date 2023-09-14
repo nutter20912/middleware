@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"middleware/middleware"
+	boardV1 "middleware/proto/board/v1"
 	userV1 "middleware/proto/user/v1"
 
 	"github.com/go-micro/plugins/v4/client/grpc"
@@ -19,7 +20,8 @@ type authWrapper struct {
 }
 
 var (
-	USER_SERVICE_NAME = "srv.user"
+	USER_SERVICE_NAME  = "srv.user"
+	BOARD_SERVICE_NAME = "srv.board"
 )
 
 var (
@@ -56,4 +58,8 @@ func (a *authWrapper) Call(
 
 func NewUserServiceClient() userV1.UserService {
 	return userV1.NewUserService(USER_SERVICE_NAME, service.Client())
+}
+
+func NewBoardServiceClient() boardV1.PostService {
+	return boardV1.NewPostService(BOARD_SERVICE_NAME, service.Client())
 }

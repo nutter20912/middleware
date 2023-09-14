@@ -16,12 +16,6 @@ type NewPost struct {
 	Content string `json:"content"`
 }
 
-type Post struct {
-	Title   string `json:"title"`
-	Content string `json:"content"`
-	User    *User  `json:"user"`
-}
-
 type User struct {
 	ID        string `json:"id"`
 	Name      string `json:"name"`

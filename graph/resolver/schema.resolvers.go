@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"middleware/api/grpc"
 	"middleware/graph/model"
+	boardV1 "middleware/proto/board/v1"
 
 	"google.golang.org/protobuf/types/known/emptypb"
 )
@@ -26,7 +27,21 @@ func (r *mutationResolver) CreatePost(ctx context.Context, input model.NewPost) 
 
 // Posts is the resolver for the posts field.
 func (r *queryResolver) Posts(ctx context.Context) ([]*model.Post, error) {
-	panic(fmt.Errorf("not implemented: Posts - posts"))
+	rsp, err := grpc.NewBoardServiceClient().GetAll(ctx, &boardV1.PostServiceGetAllRequest{})
+	if err != nil {
+		return nil, err
+	} else {
+		fmt.Println(rsp)
+	}
+
+	rspString, _ := json.Marshal(rsp.Data)
+	var posts []*model.Post
+
+	if err = json.Unmarshal(rspString, &posts); err != nil {
+		return nil, err
+	}
+
+	return posts, nil
 }
 
 // User is the resolver for the user field.

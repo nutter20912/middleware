@@ -7,7 +7,9 @@ type User {
 }
 
 type Post {
+  id: ID!
   title: String!
   content: String!
+  user_id: ID!
   user: User!
 }
