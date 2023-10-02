@@ -15,35 +15,6 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-// Login is the resolver for the login field.
-func (r *mutationResolver) Login(ctx context.Context, input model.LoginRequest) (*model.LoginResponse, error) {
-	panic(fmt.Errorf("not implemented: Login - login"))
-}
-
-// CreatePost is the resolver for the createPost field.
-func (r *mutationResolver) CreatePost(ctx context.Context, input model.NewPost) (*model.Post, error) {
-	panic(fmt.Errorf("not implemented: CreatePost - createPost"))
-}
-
-// Posts is the resolver for the posts field.
-func (r *queryResolver) Posts(ctx context.Context) ([]*model.Post, error) {
-	rsp, err := grpc.NewBoardServiceClient().GetAll(ctx, &boardV1.PostServiceGetAllRequest{})
-	if err != nil {
-		return nil, err
-	} else {
-		fmt.Println(rsp)
-	}
-
-	rspString, _ := json.Marshal(rsp.Data)
-	var posts []*model.Post
-
-	if err = json.Unmarshal(rspString, &posts); err != nil {
-		return nil, err
-	}
-
-	return posts, nil
-}
-
 // User is the resolver for the user field.
 func (r *queryResolver) User(ctx context.Context) (*model.User, error) {
 	rsp, err := grpc.NewUserServiceClient().Get(ctx, &emptypb.Empty{})
@@ -63,11 +34,58 @@ func (r *queryResolver) User(ctx context.Context) (*model.User, error) {
 	return &user, nil
 }
 
-// Mutation returns MutationResolver implementation.
-func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
+// Posts is the resolver for the posts field.
+func (r *queryResolver) Posts(ctx context.Context, cursor *string) (*model.PostsResponse, error) {
+	req := &boardV1.PostServiceGetAllRequest{}
+
+	if cursor != nil && *cursor != "" {
+		req.Cursor = cursor
+	}
+
+	rsp, err := grpc.NewPostServiceClient().GetAll(ctx, req)
+	if err != nil {
+		return nil, err
+	} else {
+		fmt.Println(rsp)
+	}
+
+	rspString, _ := json.Marshal(rsp.Data)
+	var posts []*model.Post
+
+	if err = json.Unmarshal(rspString, &posts); err != nil {
+		return nil, err
+	}
+
+	postsResponse := model.PostsResponse{
+		Data: posts,
+		Paginator: &model.Paginator{
+			NextCursor: &rsp.Paginator.NextCursor,
+		},
+	}
+
+	return &postsResponse, nil
+}
+
+// Post is the resolver for the post field.
+func (r *queryResolver) Post(ctx context.Context, id string) (*model.Post, error) {
+	rsp, err := grpc.NewPostServiceClient().Get(ctx, &boardV1.PostServiceGetRequest{Id: id})
+	if err != nil {
+		return nil, err
+	} else {
+		fmt.Println(rsp)
+	}
+
+	rspString, _ := json.Marshal(rsp.Data)
+	var post *model.Post
+
+	if err = json.Unmarshal(rspString, &post); err != nil {
+		return nil, err
+	}
+
+	return post, nil
+}
 
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
-type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }

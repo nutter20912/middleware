@@ -2,18 +2,13 @@
 
 package model
 
-type LoginRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+type Paginator struct {
+	NextCursor *string `json:"next_cursor,omitempty"`
 }
 
-type LoginResponse struct {
-	Token string `json:"token"`
-}
-
-type NewPost struct {
-	Title   string `json:"title"`
-	Content string `json:"content"`
+type PostsResponse struct {
+	Data      []*Post    `json:"data"`
+	Paginator *Paginator `json:"paginator,omitempty"`
 }
 
 type User struct {

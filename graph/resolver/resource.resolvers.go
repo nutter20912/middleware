@@ -6,10 +6,23 @@ package resolver
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"middleware/api/grpc"
 	"middleware/graph/loaders"
 	"middleware/graph/model"
+	boardV1 "middleware/proto/board/v1"
 )
+
+// User is the resolver for the user field.
+func (r *commentResolver) User(ctx context.Context, obj *model.Comment) (*model.User, error) {
+	result, err := loaders.GetUser(ctx, obj.UserId)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return result, nil
+}
 
 // User is the resolver for the user field.
 func (r *postResolver) User(ctx context.Context, obj *model.Post) (*model.User, error) {
@@ -21,9 +34,34 @@ func (r *postResolver) User(ctx context.Context, obj *model.Post) (*model.User, 
 	return result, nil
 }
 
+// Comments is the resolver for the comments field.
+func (r *postResolver) Comments(ctx context.Context, obj *model.Post) ([]*model.Comment, error) {
+	rsp, err := grpc.NewCommentServiceClient().GetAll(ctx, &boardV1.CommentServiceGetAllRequest{
+		PostId: obj.ID,
+	})
+	if err != nil {
+		return nil, err
+	} else {
+		fmt.Println(rsp)
+	}
+
+	rspString, _ := json.Marshal(rsp.Data)
+	var comments []*model.Comment
+
+	if err = json.Unmarshal(rspString, &comments); err != nil {
+		return nil, err
+	}
+
+	return comments, nil
+}
+
+// Comment returns CommentResolver implementation.
+func (r *Resolver) Comment() CommentResolver { return &commentResolver{r} }
+
 // Post returns PostResolver implementation.
 func (r *Resolver) Post() PostResolver { return &postResolver{r} }
 
+type commentResolver struct{ *Resolver }
 type postResolver struct{ *Resolver }
 
 // !!! WARNING !!!

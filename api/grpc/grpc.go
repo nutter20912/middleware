@@ -60,6 +60,10 @@ func NewUserServiceClient() userV1.UserService {
 	return userV1.NewUserService(USER_SERVICE_NAME, service.Client())
 }
 
-func NewBoardServiceClient() boardV1.PostService {
+func NewPostServiceClient() boardV1.PostService {
 	return boardV1.NewPostService(BOARD_SERVICE_NAME, service.Client())
+}
+
+func NewCommentServiceClient() boardV1.CommentService {
+	return boardV1.NewCommentService(BOARD_SERVICE_NAME, service.Client())
 }

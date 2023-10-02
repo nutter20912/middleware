@@ -11,5 +11,15 @@ type Post {
   title: String!
   content: String!
   user_id: ID!
+
+  user: User!
+  comments: [Comment]
+}
+
+type Comment {
+  id: ID!
+  user_id: ID!
+  content: String!
+
   user: User!
 }

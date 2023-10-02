@@ -3,25 +3,16 @@
 # https://gqlgen.com/getting-started/
 
 type Query {
-  posts: [Post]!
   user: User!
+  posts(cursor: String): PostsResponse
+  post(id: String!): Post!
 }
 
-type Mutation {
-  login(input: LoginRequest!): LoginResponse!
-  createPost(input: NewPost!): Post!
+type Paginator {
+  next_cursor: String
 }
 
-input LoginRequest {
-  email: String!
-  password: String!
-}
-
-type LoginResponse {
-  token: String!
-}
-
-input NewPost {
-  title: String!
-  content: String!
+type PostsResponse {
+  data: [Post]!
+  paginator: Paginator
 }
