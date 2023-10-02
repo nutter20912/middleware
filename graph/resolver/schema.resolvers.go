@@ -35,14 +35,14 @@ func (r *queryResolver) User(ctx context.Context) (*model.User, error) {
 }
 
 // Posts is the resolver for the posts field.
-func (r *queryResolver) Posts(ctx context.Context, cursor *string) (*model.PostsResponse, error) {
-	req := &boardV1.PostServiceGetAllRequest{}
+func (r *queryResolver) Posts(ctx context.Context, cursor *string) (*model.Posts, error) {
+	req := boardV1.PostServiceGetAllRequest{}
 
 	if cursor != nil && *cursor != "" {
 		req.Cursor = cursor
 	}
 
-	rsp, err := grpc.NewPostServiceClient().GetAll(ctx, req)
+	rsp, err := grpc.NewPostServiceClient().GetAll(ctx, &req)
 	if err != nil {
 		return nil, err
 	} else {
@@ -56,7 +56,7 @@ func (r *queryResolver) Posts(ctx context.Context, cursor *string) (*model.Posts
 		return nil, err
 	}
 
-	postsResponse := model.PostsResponse{
+	postsResponse := model.Posts{
 		Data: posts,
 		Paginator: &model.Paginator{
 			NextCursor: &rsp.Paginator.NextCursor,
@@ -83,6 +83,38 @@ func (r *queryResolver) Post(ctx context.Context, id string) (*model.Post, error
 	}
 
 	return post, nil
+}
+
+// Comments is the resolver for the comments field.
+func (r *queryResolver) Comments(ctx context.Context, postID string, cursor *string) (*model.Comments, error) {
+	req := boardV1.CommentServiceGetAllRequest{PostId: postID}
+
+	if cursor != nil && *cursor != "" {
+		req.Cursor = cursor
+	}
+
+	rsp, err := grpc.NewCommentServiceClient().GetAll(ctx, &req)
+	if err != nil {
+		return nil, err
+	} else {
+		fmt.Println(rsp)
+	}
+
+	rspString, _ := json.Marshal(rsp.Data)
+	var comments []*model.Comment
+
+	if err = json.Unmarshal(rspString, &comments); err != nil {
+		return nil, err
+	}
+
+	commentsResponse := model.Comments{
+		Data: comments,
+		Paginator: &model.Paginator{
+			NextCursor: &rsp.Paginator.NextCursor,
+		},
+	}
+
+	return &commentsResponse, nil
 }
 
 // Query returns QueryResolver implementation.

@@ -1,9 +1,17 @@
+type Paginator {
+  next_cursor: String
+}
 
 type User {
   id: ID!
   name: String!
   email: String!
   created_at: String!
+}
+
+type Posts {
+  data: [Post]!
+  paginator: Paginator
 }
 
 type Post {
@@ -13,7 +21,11 @@ type Post {
   user_id: ID!
 
   user: User!
-  comments: [Comment]
+}
+
+type Comments {
+  data: [Comment]!
+  paginator: Paginator
 }
 
 type Comment {

@@ -2,11 +2,16 @@
 
 package model
 
+type Comments struct {
+	Data      []*Comment `json:"data"`
+	Paginator *Paginator `json:"paginator,omitempty"`
+}
+
 type Paginator struct {
 	NextCursor *string `json:"next_cursor,omitempty"`
 }
 
-type PostsResponse struct {
+type Posts struct {
 	Data      []*Post    `json:"data"`
 	Paginator *Paginator `json:"paginator,omitempty"`
 }

@@ -4,15 +4,7 @@
 
 type Query {
   user: User!
-  posts(cursor: String): PostsResponse
+  posts(cursor: String): Posts
   post(id: String!): Post!
-}
-
-type Paginator {
-  next_cursor: String
-}
-
-type PostsResponse {
-  data: [Post]!
-  paginator: Paginator
+  comments(post_id: String!, cursor: String): Comments
 }
