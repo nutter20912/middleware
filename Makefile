@@ -11,3 +11,7 @@ ifeq ($(strip $(path)),)
 endif
 debug::
 	dlv debug $(path) --headless --listen=:12346 --api-version=2
+
+
+#git submodule update --remote
+#git submodule update --init --recursive
