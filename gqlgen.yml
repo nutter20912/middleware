@@ -93,3 +93,7 @@ models:
     fields:
       user:
         resolver: true
+  DepositOrder:
+    fields:
+      events:
+        resolver: true

@@ -2,9 +2,23 @@
 
 package model
 
+import (
+	"fmt"
+	"io"
+	"strconv"
+)
+
 type Comments struct {
 	Data      []*Comment `json:"data"`
 	Paginator *Paginator `json:"paginator,omitempty"`
+}
+
+type DepositOrderEvent struct {
+	UserID  string        `json:"user_id"`
+	OrderID string        `json:"order_id"`
+	Status  DepositStatus `json:"status"`
+	Amount  float64       `json:"amount"`
+	Memo    string        `json:"memo"`
 }
 
 type Paginator struct {
@@ -21,4 +35,120 @@ type User struct {
 	Name      string `json:"name"`
 	Email     string `json:"email"`
 	CreatedAt string `json:"created_at"`
+}
+
+type Wallet struct {
+	Amount    float64 `json:"amount"`
+	CreatedAt string  `json:"created_at"`
+	UpdatedAt string  `json:"updated_at"`
+}
+
+type WalletEvent struct {
+	UserID  string          `json:"user_id"`
+	OrderID string          `json:"order_id"`
+	Type    WalletEventType `json:"type"`
+	Time    string          `json:"time"`
+	Change  float64         `json:"change"`
+	Memo    string          `json:"memo"`
+}
+
+type WalletEvents struct {
+	Data      []*WalletEvent `json:"data"`
+	Paginator *Paginator     `json:"paginator,omitempty"`
+}
+
+type DepositStatus string
+
+const (
+	DepositStatusUnspecified DepositStatus = "UNSPECIFIED"
+	DepositStatusPending     DepositStatus = "PENDING"
+	DepositStatusProcessing  DepositStatus = "PROCESSING"
+	DepositStatusCompleted   DepositStatus = "COMPLETED"
+	DepositStatusFailed      DepositStatus = "FAILED"
+	DepositStatusCanceled    DepositStatus = "CANCELED"
+)
+
+var AllDepositStatus = []DepositStatus{
+	DepositStatusUnspecified,
+	DepositStatusPending,
+	DepositStatusProcessing,
+	DepositStatusCompleted,
+	DepositStatusFailed,
+	DepositStatusCanceled,
+}
+
+func (e DepositStatus) IsValid() bool {
+	switch e {
+	case DepositStatusUnspecified, DepositStatusPending, DepositStatusProcessing, DepositStatusCompleted, DepositStatusFailed, DepositStatusCanceled:
+		return true
+	}
+	return false
+}
+
+func (e DepositStatus) String() string {
+	return string(e)
+}
+
+func (e *DepositStatus) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = DepositStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid DepositStatus", str)
+	}
+	return nil
+}
+
+func (e DepositStatus) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type WalletEventType string
+
+const (
+	WalletEventTypeUnspecified WalletEventType = "UNSPECIFIED"
+	WalletEventTypeSystem      WalletEventType = "SYSTEM"
+	WalletEventTypeDeposit     WalletEventType = "DEPOSIT"
+	WalletEventTypeWithdraw    WalletEventType = "WITHDRAW"
+	WalletEventTypeSpotOrder   WalletEventType = "SPOT_ORDER"
+)
+
+var AllWalletEventType = []WalletEventType{
+	WalletEventTypeUnspecified,
+	WalletEventTypeSystem,
+	WalletEventTypeDeposit,
+	WalletEventTypeWithdraw,
+	WalletEventTypeSpotOrder,
+}
+
+func (e WalletEventType) IsValid() bool {
+	switch e {
+	case WalletEventTypeUnspecified, WalletEventTypeSystem, WalletEventTypeDeposit, WalletEventTypeWithdraw, WalletEventTypeSpotOrder:
+		return true
+	}
+	return false
+}
+
+func (e WalletEventType) String() string {
+	return string(e)
+}
+
+func (e *WalletEventType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = WalletEventType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid WalletEventType", str)
+	}
+	return nil
+}
+
+func (e WalletEventType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }

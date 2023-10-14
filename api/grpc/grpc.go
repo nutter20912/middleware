@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"middleware/middleware"
 	boardV1 "middleware/proto/board/v1"
+	orderV1 "middleware/proto/order/v1"
 	userV1 "middleware/proto/user/v1"
+	walletV1 "middleware/proto/wallet/v1"
 
 	"github.com/go-micro/plugins/v4/client/grpc"
 	"github.com/go-micro/plugins/v4/registry/consul"
@@ -20,8 +22,10 @@ type authWrapper struct {
 }
 
 var (
-	USER_SERVICE_NAME  = "srv.user"
-	BOARD_SERVICE_NAME = "srv.board"
+	USER_SERVICE_NAME   = "srv.user"
+	BOARD_SERVICE_NAME  = "srv.board"
+	WALLET_SERVICE_NAME = "srv.wallet"
+	ORDER_SERVICE_NAME  = "srv.order"
 )
 
 var (
@@ -66,4 +70,12 @@ func NewPostServiceClient() boardV1.PostService {
 
 func NewCommentServiceClient() boardV1.CommentService {
 	return boardV1.NewCommentService(BOARD_SERVICE_NAME, service.Client())
+}
+
+func NewWalletServiceClient() walletV1.WalletService {
+	return walletV1.NewWalletService(WALLET_SERVICE_NAME, service.Client())
+}
+
+func NewOrderServiceClient() orderV1.OrderService {
+	return orderV1.NewOrderService(ORDER_SERVICE_NAME, service.Client())
 }

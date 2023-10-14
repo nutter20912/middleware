@@ -14,3 +14,12 @@ type Comment struct {
 	Content string `json:"content"`
 	User    *User  `json:"user"`
 }
+
+type DepositOrder struct {
+	ID     string               `json:"id"`
+	UserID string               `json:"user_id"`
+	Status DepositStatus        `json:"status"`
+	Amount float64              `json:"amount"`
+	Memo   string               `json:"memo"`
+	Events []*DepositOrderEvent `json:"events"`
+}

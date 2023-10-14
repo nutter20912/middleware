@@ -11,6 +11,9 @@ import (
 	"middleware/api/grpc"
 	"middleware/graph/model"
 	boardV1 "middleware/proto/board/v1"
+	orderV1 "middleware/proto/order/v1"
+	walletV1 "middleware/proto/wallet/v1"
+	"strings"
 
 	"google.golang.org/protobuf/types/known/emptypb"
 )
@@ -115,6 +118,84 @@ func (r *queryResolver) Comments(ctx context.Context, postID string, cursor *str
 	}
 
 	return &commentsResponse, nil
+}
+
+// Wallet is the resolver for the wallet field.
+func (r *queryResolver) Wallet(ctx context.Context) (*model.Wallet, error) {
+	rsp, err := grpc.NewWalletServiceClient().Get(ctx, &emptypb.Empty{})
+	if err != nil {
+		return nil, err
+	} else {
+		fmt.Println(rsp)
+	}
+
+	rspString, _ := json.Marshal(rsp.Data)
+	var wallet *model.Wallet
+
+	if err = json.Unmarshal(rspString, &wallet); err != nil {
+		return nil, err
+	}
+
+	return wallet, nil
+}
+
+// WalletEvents is the resolver for the walletEvents field.
+func (r *queryResolver) WalletEvents(ctx context.Context, cursor *string) (*model.WalletEvents, error) {
+	req := walletV1.GetEventRequest{}
+
+	if cursor != nil && *cursor != "" {
+		req.Cursor = cursor
+	}
+
+	rsp, err := grpc.NewWalletServiceClient().GetEvent(ctx, &req)
+	if err != nil {
+		return nil, err
+	} else {
+		fmt.Println(rsp)
+	}
+
+	var events []*model.WalletEvent
+	for _, item := range rsp.Data {
+		events = append(events, &model.WalletEvent{
+			UserID:  item.UserId,
+			OrderID: item.OrderId,
+			Time:    item.Time,
+			Change:  item.Change,
+			Memo:    item.Memo,
+			Type: model.WalletEventType(
+				strings.TrimPrefix(item.Type.String(), "WALLET_EVENT_TYPE_"),
+			),
+		})
+	}
+
+	response := model.WalletEvents{
+		Data: events,
+		//Paginator: &model.Paginator{
+		//	NextCursor: &rsp.Paginator.NextCursor,
+		//},
+	}
+
+	return &response, nil
+}
+
+// DepositOrder is the resolver for the depositOrder field.
+func (r *queryResolver) DepositOrder(ctx context.Context, id string) (*model.DepositOrder, error) {
+	orderRsp, err := grpc.NewOrderServiceClient().GetDeposit(ctx, &orderV1.GetDepositRequest{Id: id})
+	if err != nil {
+		return nil, err
+	}
+
+	order := &model.DepositOrder{
+		ID:     orderRsp.Data.Id,
+		UserID: orderRsp.Data.UserId,
+		Amount: orderRsp.Data.Amount,
+		Memo:   orderRsp.Data.Memo,
+		Status: model.DepositStatus(
+			strings.TrimPrefix(orderRsp.Data.Status.String(), "DEPOSIT_STATUS_"),
+		),
+	}
+
+	return order, nil
 }
 
 // Query returns QueryResolver implementation.

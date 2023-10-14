@@ -35,3 +35,58 @@ type Comment {
 
   user: User!
 }
+
+type Wallet {
+  amount: Float!
+  created_at: String!
+  updated_at: String!
+}
+
+enum WalletEventType {
+  UNSPECIFIED
+  SYSTEM
+  DEPOSIT
+  WITHDRAW
+  SPOT_ORDER
+}
+
+type WalletEvent {
+  user_id: ID!
+  order_id: ID!
+  type: WalletEventType!
+  time: String!
+  change: Float!
+  memo: String!
+}
+
+type WalletEvents {
+  data: [WalletEvent]!
+  paginator: Paginator
+}
+
+enum DepositStatus {
+  UNSPECIFIED
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELED
+}
+
+type DepositOrder {
+  id: ID!
+  user_id: ID!
+  status: DepositStatus!
+  amount: Float!
+  memo: String!
+
+  events: [DepositOrderEvent]!
+}
+
+type DepositOrderEvent {
+  user_id: ID!
+  order_id: ID!
+  status: DepositStatus!
+  amount: Float!
+  memo: String!
+}

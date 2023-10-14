@@ -7,4 +7,9 @@ type Query {
   posts(cursor: String): Posts
   post(id: String!): Post!
   comments(post_id: String!, cursor: String): Comments
+
+  wallet: Wallet
+  walletEvents(cursor: String): WalletEvents
+
+  depositOrder(id: String!): DepositOrder!
 }
