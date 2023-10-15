@@ -38,6 +38,7 @@ func (r *depositOrderResolver) Events(ctx context.Context, obj *model.DepositOrd
 			OrderID: item.OrderId,
 			Amount:  item.Amount,
 			Memo:    item.Memo,
+			Time:    item.Time,
 			Status: model.DepositStatus(
 				strings.TrimPrefix(item.Status.String(), "DEPOSIT_STATUS_"),
 			),

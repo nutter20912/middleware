@@ -79,6 +79,8 @@ type DepositOrder {
   status: DepositStatus!
   amount: Float!
   memo: String!
+  created_at: String!
+  updated_at: String!
 
   events: [DepositOrderEvent]!
 }
@@ -89,4 +91,5 @@ type DepositOrderEvent {
   status: DepositStatus!
   amount: Float!
   memo: String!
+  time: String!
 }

@@ -16,10 +16,12 @@ type Comment struct {
 }
 
 type DepositOrder struct {
-	ID     string               `json:"id"`
-	UserID string               `json:"user_id"`
-	Status DepositStatus        `json:"status"`
-	Amount float64              `json:"amount"`
-	Memo   string               `json:"memo"`
-	Events []*DepositOrderEvent `json:"events"`
+	ID        string               `json:"id"`
+	UserID    string               `json:"user_id"`
+	Status    DepositStatus        `json:"status"`
+	Amount    float64              `json:"amount"`
+	Memo      string               `json:"memo"`
+	CreatedAt string               `json:"created_at"`
+	UpdatedAt string               `json:"updated_at"`
+	Events    []*DepositOrderEvent `json:"events"`
 }

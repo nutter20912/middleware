@@ -185,11 +185,15 @@ func (r *queryResolver) DepositOrder(ctx context.Context, id string) (*model.Dep
 		return nil, err
 	}
 
+	fmt.Println(orderRsp.Data.CreatedAt)
+
 	order := &model.DepositOrder{
-		ID:     orderRsp.Data.Id,
-		UserID: orderRsp.Data.UserId,
-		Amount: orderRsp.Data.Amount,
-		Memo:   orderRsp.Data.Memo,
+		ID:        orderRsp.Data.Id,
+		UserID:    orderRsp.Data.UserId,
+		Amount:    orderRsp.Data.Amount,
+		Memo:      orderRsp.Data.Memo,
+		CreatedAt: orderRsp.Data.CreatedAt,
+		UpdatedAt: orderRsp.Data.UpdatedAt,
 		Status: model.DepositStatus(
 			strings.TrimPrefix(orderRsp.Data.Status.String(), "DEPOSIT_STATUS_"),
 		),

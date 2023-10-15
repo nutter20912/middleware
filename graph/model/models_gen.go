@@ -19,6 +19,7 @@ type DepositOrderEvent struct {
 	Status  DepositStatus `json:"status"`
 	Amount  float64       `json:"amount"`
 	Memo    string        `json:"memo"`
+	Time    string        `json:"time"`
 }
 
 type Paginator struct {
