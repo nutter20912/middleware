@@ -22,6 +22,13 @@ type DepositOrderEvent struct {
 	Time    string        `json:"time"`
 }
 
+type PagePaginator struct {
+	CurrentPage *int `json:"current_page,omitempty"`
+	LastPage    *int `json:"last_page,omitempty"`
+	PerPage     *int `json:"per_page,omitempty"`
+	Total       *int `json:"total,omitempty"`
+}
+
 type Paginator struct {
 	NextCursor *string `json:"next_cursor,omitempty"`
 }
@@ -55,7 +62,7 @@ type WalletEvent struct {
 
 type WalletEvents struct {
 	Data      []*WalletEvent `json:"data"`
-	Paginator *Paginator     `json:"paginator,omitempty"`
+	Paginator *PagePaginator `json:"paginator,omitempty"`
 }
 
 type DepositStatus string

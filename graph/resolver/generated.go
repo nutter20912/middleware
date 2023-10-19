@@ -78,6 +78,13 @@ type ComplexityRoot struct {
 		UserID  func(childComplexity int) int
 	}
 
+	PagePaginator struct {
+		CurrentPage func(childComplexity int) int
+		LastPage    func(childComplexity int) int
+		PerPage     func(childComplexity int) int
+		Total       func(childComplexity int) int
+	}
+
 	Paginator struct {
 		NextCursor func(childComplexity int) int
 	}
@@ -102,7 +109,7 @@ type ComplexityRoot struct {
 		Posts        func(childComplexity int, cursor *string) int
 		User         func(childComplexity int) int
 		Wallet       func(childComplexity int) int
-		WalletEvents func(childComplexity int, cursor *string) int
+		WalletEvents func(childComplexity int, page *int64, limit *int64) int
 	}
 
 	User struct {
@@ -148,7 +155,7 @@ type QueryResolver interface {
 	Post(ctx context.Context, id string) (*model.Post, error)
 	Comments(ctx context.Context, postID string, cursor *string) (*model.Comments, error)
 	Wallet(ctx context.Context) (*model.Wallet, error)
-	WalletEvents(ctx context.Context, cursor *string) (*model.WalletEvents, error)
+	WalletEvents(ctx context.Context, page *int64, limit *int64) (*model.WalletEvents, error)
 	DepositOrder(ctx context.Context, id string) (*model.DepositOrder, error)
 }
 
@@ -307,6 +314,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.DepositOrderEvent.UserID(childComplexity), true
 
+	case "PagePaginator.current_page":
+		if e.complexity.PagePaginator.CurrentPage == nil {
+			break
+		}
+
+		return e.complexity.PagePaginator.CurrentPage(childComplexity), true
+
+	case "PagePaginator.last_page":
+		if e.complexity.PagePaginator.LastPage == nil {
+			break
+		}
+
+		return e.complexity.PagePaginator.LastPage(childComplexity), true
+
+	case "PagePaginator.per_page":
+		if e.complexity.PagePaginator.PerPage == nil {
+			break
+		}
+
+		return e.complexity.PagePaginator.PerPage(childComplexity), true
+
+	case "PagePaginator.total":
+		if e.complexity.PagePaginator.Total == nil {
+			break
+		}
+
+		return e.complexity.PagePaginator.Total(childComplexity), true
+
 	case "Paginator.next_cursor":
 		if e.complexity.Paginator.NextCursor == nil {
 			break
@@ -435,7 +470,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.WalletEvents(childComplexity, args["cursor"].(*string)), true
+		return e.complexity.Query.WalletEvents(childComplexity, args["page"].(*int64), args["limit"].(*int64)), true
 
 	case "User.created_at":
 		if e.complexity.User.CreatedAt == nil {
@@ -634,6 +669,12 @@ var sources = []*ast.Source{
 	{Name: "../schema/resource.graphqls", Input: `type Paginator {
   next_cursor: String
 }
+type PagePaginator {
+  current_page: Int
+  last_page: Int
+  per_page: Int
+  total: Int
+}
 
 type User {
   id: ID!
@@ -694,7 +735,7 @@ type WalletEvent {
 
 type WalletEvents {
   data: [WalletEvent]!
-  paginator: Paginator
+  paginator: PagePaginator
 }
 
 enum DepositStatus {
@@ -730,6 +771,7 @@ type DepositOrderEvent {
 	{Name: "../schema/schema.graphqls", Input: `# GraphQL schema example
 #
 # https://gqlgen.com/getting-started/
+scalar Int64
 
 type Query {
   user: User!
@@ -738,7 +780,7 @@ type Query {
   comments(post_id: String!, cursor: String): Comments
 
   wallet: Wallet
-  walletEvents(cursor: String): WalletEvents
+  walletEvents(page: Int64, limit: Int64): WalletEvents
 
   depositOrder(id: String!): DepositOrder!
 }
@@ -837,15 +879,24 @@ func (ec *executionContext) field_Query_posts_args(ctx context.Context, rawArgs 
 func (ec *executionContext) field_Query_walletEvents_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *string
-	if tmp, ok := rawArgs["cursor"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cursor"))
-		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+	var arg0 *int64
+	if tmp, ok := rawArgs["page"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("page"))
+		arg0, err = ec.unmarshalOInt642ᚖint64(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["cursor"] = arg0
+	args["page"] = arg0
+	var arg1 *int64
+	if tmp, ok := rawArgs["limit"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
+		arg1, err = ec.unmarshalOInt642ᚖint64(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["limit"] = arg1
 	return args, nil
 }
 
@@ -1802,6 +1853,170 @@ func (ec *executionContext) fieldContext_DepositOrderEvent_time(ctx context.Cont
 	return fc, nil
 }
 
+func (ec *executionContext) _PagePaginator_current_page(ctx context.Context, field graphql.CollectedField, obj *model.PagePaginator) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PagePaginator_current_page(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CurrentPage, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PagePaginator_current_page(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PagePaginator",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PagePaginator_last_page(ctx context.Context, field graphql.CollectedField, obj *model.PagePaginator) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PagePaginator_last_page(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LastPage, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PagePaginator_last_page(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PagePaginator",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PagePaginator_per_page(ctx context.Context, field graphql.CollectedField, obj *model.PagePaginator) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PagePaginator_per_page(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PerPage, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PagePaginator_per_page(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PagePaginator",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PagePaginator_total(ctx context.Context, field graphql.CollectedField, obj *model.PagePaginator) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PagePaginator_total(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Total, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PagePaginator_total(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PagePaginator",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Paginator_next_cursor(ctx context.Context, field graphql.CollectedField, obj *model.Paginator) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Paginator_next_cursor(ctx, field)
 	if err != nil {
@@ -2474,7 +2689,7 @@ func (ec *executionContext) _Query_walletEvents(ctx context.Context, field graph
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().WalletEvents(rctx, fc.Args["cursor"].(*string))
+		return ec.resolvers.Query().WalletEvents(rctx, fc.Args["page"].(*int64), fc.Args["limit"].(*int64))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3373,9 +3588,9 @@ func (ec *executionContext) _WalletEvents_paginator(ctx context.Context, field g
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Paginator)
+	res := resTmp.(*model.PagePaginator)
 	fc.Result = res
-	return ec.marshalOPaginator2ᚖmiddlewareᚋgraphᚋmodelᚐPaginator(ctx, field.Selections, res)
+	return ec.marshalOPagePaginator2ᚖmiddlewareᚋgraphᚋmodelᚐPagePaginator(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_WalletEvents_paginator(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3386,10 +3601,16 @@ func (ec *executionContext) fieldContext_WalletEvents_paginator(ctx context.Cont
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "next_cursor":
-				return ec.fieldContext_Paginator_next_cursor(ctx, field)
+			case "current_page":
+				return ec.fieldContext_PagePaginator_current_page(ctx, field)
+			case "last_page":
+				return ec.fieldContext_PagePaginator_last_page(ctx, field)
+			case "per_page":
+				return ec.fieldContext_PagePaginator_per_page(ctx, field)
+			case "total":
+				return ec.fieldContext_PagePaginator_total(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Paginator", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type PagePaginator", field.Name)
 		},
 	}
 	return fc, nil
@@ -5471,6 +5692,48 @@ func (ec *executionContext) _DepositOrderEvent(ctx context.Context, sel ast.Sele
 	return out
 }
 
+var pagePaginatorImplementors = []string{"PagePaginator"}
+
+func (ec *executionContext) _PagePaginator(ctx context.Context, sel ast.SelectionSet, obj *model.PagePaginator) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, pagePaginatorImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PagePaginator")
+		case "current_page":
+			out.Values[i] = ec._PagePaginator_current_page(ctx, field, obj)
+		case "last_page":
+			out.Values[i] = ec._PagePaginator_last_page(ctx, field, obj)
+		case "per_page":
+			out.Values[i] = ec._PagePaginator_per_page(ctx, field, obj)
+		case "total":
+			out.Values[i] = ec._PagePaginator_total(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var paginatorImplementors = []string{"Paginator"}
 
 func (ec *executionContext) _Paginator(ctx context.Context, sel ast.SelectionSet, obj *model.Paginator) graphql.Marshaler {
@@ -6936,6 +7199,45 @@ func (ec *executionContext) marshalODepositOrderEvent2ᚖmiddlewareᚋgraphᚋmo
 		return graphql.Null
 	}
 	return ec._DepositOrderEvent(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.SelectionSet, v *int) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalInt(*v)
+	return res
+}
+
+func (ec *executionContext) unmarshalOInt642ᚖint64(ctx context.Context, v interface{}) (*int64, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt64(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOInt642ᚖint64(ctx context.Context, sel ast.SelectionSet, v *int64) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalInt64(*v)
+	return res
+}
+
+func (ec *executionContext) marshalOPagePaginator2ᚖmiddlewareᚋgraphᚋmodelᚐPagePaginator(ctx context.Context, sel ast.SelectionSet, v *model.PagePaginator) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._PagePaginator(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOPaginator2ᚖmiddlewareᚋgraphᚋmodelᚐPaginator(ctx context.Context, sel ast.SelectionSet, v *model.Paginator) graphql.Marshaler {

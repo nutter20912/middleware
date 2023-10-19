@@ -1,6 +1,7 @@
 # GraphQL schema example
 #
 # https://gqlgen.com/getting-started/
+scalar Int64
 
 type Query {
   user: User!
@@ -9,7 +10,7 @@ type Query {
   comments(post_id: String!, cursor: String): Comments
 
   wallet: Wallet
-  walletEvents(cursor: String): WalletEvents
+  walletEvents(page: Int64, limit: Int64): WalletEvents
 
   depositOrder(id: String!): DepositOrder!
 }

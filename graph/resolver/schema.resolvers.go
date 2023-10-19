@@ -140,11 +140,15 @@ func (r *queryResolver) Wallet(ctx context.Context) (*model.Wallet, error) {
 }
 
 // WalletEvents is the resolver for the walletEvents field.
-func (r *queryResolver) WalletEvents(ctx context.Context, cursor *string) (*model.WalletEvents, error) {
+func (r *queryResolver) WalletEvents(ctx context.Context, page *int64, limit *int64) (*model.WalletEvents, error) {
 	req := walletV1.GetEventRequest{}
 
-	if cursor != nil && *cursor != "" {
-		req.Cursor = cursor
+	if page != nil {
+		req.Page = page
+	}
+
+	if page != nil {
+		req.Limit = limit
 	}
 
 	rsp, err := grpc.NewWalletServiceClient().GetEvent(ctx, &req)
@@ -168,11 +172,13 @@ func (r *queryResolver) WalletEvents(ctx context.Context, cursor *string) (*mode
 		})
 	}
 
+	var paginator *model.PagePaginator
+	bytes, _ := json.Marshal(rsp.Paginator)
+	json.Unmarshal(bytes, &paginator)
+
 	response := model.WalletEvents{
-		Data: events,
-		//Paginator: &model.Paginator{
-		//	NextCursor: &rsp.Paginator.NextCursor,
-		//},
+		Data:      events,
+		Paginator: paginator,
 	}
 
 	return &response, nil

@@ -1,6 +1,12 @@
 type Paginator {
   next_cursor: String
 }
+type PagePaginator {
+  current_page: Int
+  last_page: Int
+  per_page: Int
+  total: Int
+}
 
 type User {
   id: ID!
@@ -61,7 +67,7 @@ type WalletEvent {
 
 type WalletEvents {
   data: [WalletEvent]!
-  paginator: Paginator
+  paginator: PagePaginator
 }
 
 enum DepositStatus {
