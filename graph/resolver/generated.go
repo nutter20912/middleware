@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"middleware/graph/model"
 	"strconv"
 	"sync"
@@ -40,6 +41,7 @@ type ResolverRoot interface {
 	DepositOrder() DepositOrderResolver
 	Post() PostResolver
 	Query() QueryResolver
+	Subscription() SubscriptionResolver
 }
 
 type DirectiveRoot struct {
@@ -112,6 +114,10 @@ type ComplexityRoot struct {
 		WalletEvents func(childComplexity int, page *int64, limit *int64) int
 	}
 
+	Subscription struct {
+		Wallet func(childComplexity int, eventCursor *string) int
+	}
+
 	User struct {
 		CreatedAt func(childComplexity int) int
 		Email     func(childComplexity int) int
@@ -127,6 +133,7 @@ type ComplexityRoot struct {
 
 	WalletEvent struct {
 		Change  func(childComplexity int) int
+		ID      func(childComplexity int) int
 		Memo    func(childComplexity int) int
 		OrderID func(childComplexity int) int
 		Time    func(childComplexity int) int
@@ -137,6 +144,11 @@ type ComplexityRoot struct {
 	WalletEvents struct {
 		Data      func(childComplexity int) int
 		Paginator func(childComplexity int) int
+	}
+
+	WalletStream struct {
+		Events func(childComplexity int) int
+		Info   func(childComplexity int) int
 	}
 }
 
@@ -157,6 +169,9 @@ type QueryResolver interface {
 	Wallet(ctx context.Context) (*model.Wallet, error)
 	WalletEvents(ctx context.Context, page *int64, limit *int64) (*model.WalletEvents, error)
 	DepositOrder(ctx context.Context, id string) (*model.DepositOrder, error)
+}
+type SubscriptionResolver interface {
+	Wallet(ctx context.Context, eventCursor *string) (<-chan *model.WalletStream, error)
 }
 
 type executableSchema struct {
@@ -472,6 +487,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.WalletEvents(childComplexity, args["page"].(*int64), args["limit"].(*int64)), true
 
+	case "Subscription.wallet":
+		if e.complexity.Subscription.Wallet == nil {
+			break
+		}
+
+		args, err := ec.field_Subscription_wallet_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Subscription.Wallet(childComplexity, args["event_cursor"].(*string)), true
+
 	case "User.created_at":
 		if e.complexity.User.CreatedAt == nil {
 			break
@@ -528,6 +555,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.WalletEvent.Change(childComplexity), true
 
+	case "WalletEvent.id":
+		if e.complexity.WalletEvent.ID == nil {
+			break
+		}
+
+		return e.complexity.WalletEvent.ID(childComplexity), true
+
 	case "WalletEvent.memo":
 		if e.complexity.WalletEvent.Memo == nil {
 			break
@@ -577,6 +611,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.WalletEvents.Paginator(childComplexity), true
 
+	case "WalletStream.events":
+		if e.complexity.WalletStream.Events == nil {
+			break
+		}
+
+		return e.complexity.WalletStream.Events(childComplexity), true
+
+	case "WalletStream.info":
+		if e.complexity.WalletStream.Info == nil {
+			break
+		}
+
+		return e.complexity.WalletStream.Info(childComplexity), true
+
 	}
 	return 0, false
 }
@@ -617,6 +665,23 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 			}
 
 			return &response
+		}
+	case ast.Subscription:
+		next := ec._Subscription(ctx, rc.Operation.SelectionSet)
+
+		var buf bytes.Buffer
+		return func(ctx context.Context) *graphql.Response {
+			buf.Reset()
+			data := next(ctx)
+
+			if data == nil {
+				return nil
+			}
+			data.MarshalGQL(&buf)
+
+			return &graphql.Response{
+				Data: buf.Bytes(),
+			}
 		}
 
 	default:
@@ -725,6 +790,7 @@ enum WalletEventType {
 }
 
 type WalletEvent {
+  id: ID!
   user_id: ID!
   order_id: ID!
   type: WalletEventType!
@@ -783,6 +849,15 @@ type Query {
   walletEvents(page: Int64, limit: Int64): WalletEvents
 
   depositOrder(id: String!): DepositOrder!
+}
+
+type Subscription {
+  wallet(event_cursor: String): WalletStream!
+}
+
+type WalletStream {
+  info: Wallet
+  events: [WalletEvent]
 }
 `, BuiltIn: false},
 }
@@ -897,6 +972,21 @@ func (ec *executionContext) field_Query_walletEvents_args(ctx context.Context, r
 		}
 	}
 	args["limit"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Subscription_wallet_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *string
+	if tmp, ok := rawArgs["event_cursor"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("event_cursor"))
+		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["event_cursor"] = arg0
 	return args, nil
 }
 
@@ -2935,6 +3025,81 @@ func (ec *executionContext) fieldContext_Query___schema(ctx context.Context, fie
 	return fc, nil
 }
 
+func (ec *executionContext) _Subscription_wallet(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
+	fc, err := ec.fieldContext_Subscription_wallet(ctx, field)
+	if err != nil {
+		return nil
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = nil
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Subscription().Wallet(rctx, fc.Args["event_cursor"].(*string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return nil
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return nil
+	}
+	return func(ctx context.Context) graphql.Marshaler {
+		select {
+		case res, ok := <-resTmp.(<-chan *model.WalletStream):
+			if !ok {
+				return nil
+			}
+			return graphql.WriterFunc(func(w io.Writer) {
+				w.Write([]byte{'{'})
+				graphql.MarshalString(field.Alias).MarshalGQL(w)
+				w.Write([]byte{':'})
+				ec.marshalNWalletStream2ᚖmiddlewareᚋgraphᚋmodelᚐWalletStream(ctx, field.Selections, res).MarshalGQL(w)
+				w.Write([]byte{'}'})
+			})
+		case <-ctx.Done():
+			return nil
+		}
+	}
+}
+
+func (ec *executionContext) fieldContext_Subscription_wallet(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Subscription",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "info":
+				return ec.fieldContext_WalletStream_info(ctx, field)
+			case "events":
+				return ec.fieldContext_WalletStream_events(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type WalletStream", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Subscription_wallet_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _User_id(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_User_id(ctx, field)
 	if err != nil {
@@ -3243,6 +3408,50 @@ func (ec *executionContext) fieldContext_Wallet_updated_at(ctx context.Context, 
 	return fc, nil
 }
 
+func (ec *executionContext) _WalletEvent_id(ctx context.Context, field graphql.CollectedField, obj *model.WalletEvent) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_WalletEvent_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_WalletEvent_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "WalletEvent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _WalletEvent_user_id(ctx context.Context, field graphql.CollectedField, obj *model.WalletEvent) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_WalletEvent_user_id(ctx, field)
 	if err != nil {
@@ -3546,6 +3755,8 @@ func (ec *executionContext) fieldContext_WalletEvents_data(ctx context.Context, 
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "id":
+				return ec.fieldContext_WalletEvent_id(ctx, field)
 			case "user_id":
 				return ec.fieldContext_WalletEvent_user_id(ctx, field)
 			case "order_id":
@@ -3611,6 +3822,112 @@ func (ec *executionContext) fieldContext_WalletEvents_paginator(ctx context.Cont
 				return ec.fieldContext_PagePaginator_total(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type PagePaginator", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _WalletStream_info(ctx context.Context, field graphql.CollectedField, obj *model.WalletStream) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_WalletStream_info(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Info, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Wallet)
+	fc.Result = res
+	return ec.marshalOWallet2ᚖmiddlewareᚋgraphᚋmodelᚐWallet(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_WalletStream_info(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "WalletStream",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "amount":
+				return ec.fieldContext_Wallet_amount(ctx, field)
+			case "created_at":
+				return ec.fieldContext_Wallet_created_at(ctx, field)
+			case "updated_at":
+				return ec.fieldContext_Wallet_updated_at(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Wallet", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _WalletStream_events(ctx context.Context, field graphql.CollectedField, obj *model.WalletStream) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_WalletStream_events(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Events, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.WalletEvent)
+	fc.Result = res
+	return ec.marshalOWalletEvent2ᚕᚖmiddlewareᚋgraphᚋmodelᚐWalletEvent(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_WalletStream_events(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "WalletStream",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_WalletEvent_id(ctx, field)
+			case "user_id":
+				return ec.fieldContext_WalletEvent_user_id(ctx, field)
+			case "order_id":
+				return ec.fieldContext_WalletEvent_order_id(ctx, field)
+			case "type":
+				return ec.fieldContext_WalletEvent_type(ctx, field)
+			case "time":
+				return ec.fieldContext_WalletEvent_time(ctx, field)
+			case "change":
+				return ec.fieldContext_WalletEvent_change(ctx, field)
+			case "memo":
+				return ec.fieldContext_WalletEvent_memo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type WalletEvent", field.Name)
 		},
 	}
 	return fc, nil
@@ -6093,6 +6410,26 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 	return out
 }
 
+var subscriptionImplementors = []string{"Subscription"}
+
+func (ec *executionContext) _Subscription(ctx context.Context, sel ast.SelectionSet) func(ctx context.Context) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, subscriptionImplementors)
+	ctx = graphql.WithFieldContext(ctx, &graphql.FieldContext{
+		Object: "Subscription",
+	})
+	if len(fields) != 1 {
+		ec.Errorf(ctx, "must subscribe to exactly one stream")
+		return nil
+	}
+
+	switch fields[0].Name {
+	case "wallet":
+		return ec._Subscription_wallet(ctx, fields[0])
+	default:
+		panic("unknown field " + strconv.Quote(fields[0].Name))
+	}
+}
+
 var userImplementors = []string{"User"}
 
 func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj *model.User) graphql.Marshaler {
@@ -6207,6 +6544,11 @@ func (ec *executionContext) _WalletEvent(ctx context.Context, sel ast.SelectionS
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("WalletEvent")
+		case "id":
+			out.Values[i] = ec._WalletEvent_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "user_id":
 			out.Values[i] = ec._WalletEvent_user_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -6278,6 +6620,44 @@ func (ec *executionContext) _WalletEvents(ctx context.Context, sel ast.Selection
 			}
 		case "paginator":
 			out.Values[i] = ec._WalletEvents_paginator(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var walletStreamImplementors = []string{"WalletStream"}
+
+func (ec *executionContext) _WalletStream(ctx context.Context, sel ast.SelectionSet, obj *model.WalletStream) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, walletStreamImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("WalletStream")
+		case "info":
+			out.Values[i] = ec._WalletStream_info(ctx, field, obj)
+		case "events":
+			out.Values[i] = ec._WalletStream_events(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6901,6 +7281,20 @@ func (ec *executionContext) marshalNWalletEventType2middlewareᚋgraphᚋmodel�
 	return v
 }
 
+func (ec *executionContext) marshalNWalletStream2middlewareᚋgraphᚋmodelᚐWalletStream(ctx context.Context, sel ast.SelectionSet, v model.WalletStream) graphql.Marshaler {
+	return ec._WalletStream(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNWalletStream2ᚖmiddlewareᚋgraphᚋmodelᚐWalletStream(ctx context.Context, sel ast.SelectionSet, v *model.WalletStream) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._WalletStream(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {
 	return ec.___Directive(ctx, sel, &v)
 }
@@ -7282,6 +7676,47 @@ func (ec *executionContext) marshalOWallet2ᚖmiddlewareᚋgraphᚋmodelᚐWalle
 		return graphql.Null
 	}
 	return ec._Wallet(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOWalletEvent2ᚕᚖmiddlewareᚋgraphᚋmodelᚐWalletEvent(ctx context.Context, sel ast.SelectionSet, v []*model.WalletEvent) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOWalletEvent2ᚖmiddlewareᚋgraphᚋmodelᚐWalletEvent(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
 }
 
 func (ec *executionContext) marshalOWalletEvent2ᚖmiddlewareᚋgraphᚋmodelᚐWalletEvent(ctx context.Context, sel ast.SelectionSet, v *model.WalletEvent) graphql.Marshaler {

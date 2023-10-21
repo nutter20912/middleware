@@ -15,6 +15,8 @@ import (
 	walletV1 "middleware/proto/wallet/v1"
 	"strings"
 
+	"github.com/99designs/gqlgen/graphql/handler/transport"
+	"github.com/vektah/gqlparser/v2/gqlerror"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -161,6 +163,7 @@ func (r *queryResolver) WalletEvents(ctx context.Context, page *int64, limit *in
 	var events []*model.WalletEvent
 	for _, item := range rsp.Data {
 		events = append(events, &model.WalletEvent{
+			ID:      item.Id,
 			UserID:  item.UserId,
 			OrderID: item.OrderId,
 			Time:    item.Time,
@@ -208,7 +211,67 @@ func (r *queryResolver) DepositOrder(ctx context.Context, id string) (*model.Dep
 	return order, nil
 }
 
+// Wallet is the resolver for the wallet field.
+func (r *subscriptionResolver) Wallet(ctx context.Context, eventCursor *string) (<-chan *model.WalletStream, error) {
+	req := walletV1.GetWalletStreamResquest{}
+	if eventCursor != nil && *eventCursor != "" {
+		req.EventCursor = eventCursor
+	}
+
+	stream, err := grpc.NewWalletServiceClient().GetWalletStream(ctx, &req)
+	if err != nil {
+		transport.AddSubscriptionError(ctx, gqlerror.Wrap(err))
+		return nil, err
+	}
+
+	ch := make(chan *model.WalletStream)
+
+	go func() {
+		defer close(ch)
+
+		for {
+			rsp, err := stream.Recv()
+			if err != nil {
+				transport.AddSubscriptionError(ctx, gqlerror.Wrap(err))
+				return
+			}
+
+			var data *model.WalletStream
+			bytes, _ := json.Marshal(rsp)
+			json.Unmarshal(bytes, &data)
+
+			var events []*model.WalletEvent
+			for _, item := range rsp.Events {
+				events = append(events, &model.WalletEvent{
+					ID:      item.Id,
+					UserID:  item.UserId,
+					OrderID: item.OrderId,
+					Time:    item.Time,
+					Change:  item.Change,
+					Memo:    item.Memo,
+					Type: model.WalletEventType(
+						strings.TrimPrefix(item.Type.String(), "WALLET_EVENT_TYPE_"),
+					),
+				})
+			}
+			data.Events = events
+
+			select {
+			case <-ctx.Done():
+				return
+			case ch <- data:
+			}
+		}
+	}()
+
+	return ch, nil
+}
+
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
+// Subscription returns SubscriptionResolver implementation.
+func (r *Resolver) Subscription() SubscriptionResolver { return &subscriptionResolver{r} }
+
 type queryResolver struct{ *Resolver }
+type subscriptionResolver struct{ *Resolver }

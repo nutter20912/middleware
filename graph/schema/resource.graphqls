@@ -57,6 +57,7 @@ enum WalletEventType {
 }
 
 type WalletEvent {
+  id: ID!
   user_id: ID!
   order_id: ID!
   type: WalletEventType!

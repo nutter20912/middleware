@@ -52,6 +52,7 @@ type Wallet struct {
 }
 
 type WalletEvent struct {
+	ID      string          `json:"id"`
 	UserID  string          `json:"user_id"`
 	OrderID string          `json:"order_id"`
 	Type    WalletEventType `json:"type"`
@@ -63,6 +64,11 @@ type WalletEvent struct {
 type WalletEvents struct {
 	Data      []*WalletEvent `json:"data"`
 	Paginator *PagePaginator `json:"paginator,omitempty"`
+}
+
+type WalletStream struct {
+	Info   *Wallet        `json:"info,omitempty"`
+	Events []*WalletEvent `json:"events,omitempty"`
 }
 
 type DepositStatus string
