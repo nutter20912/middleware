@@ -1,4 +1,4 @@
-package wapper
+package wrapper
 
 import (
 	"context"

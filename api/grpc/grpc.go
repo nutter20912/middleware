@@ -7,7 +7,7 @@ import (
 	orderV1 "middleware/proto/order/v1"
 	userV1 "middleware/proto/user/v1"
 	walletV1 "middleware/proto/wallet/v1"
-	"middleware/wapper"
+	"middleware/wrapper"
 
 	"github.com/go-micro/plugins/v4/client/grpc"
 	"github.com/go-micro/plugins/v4/registry/consul"
@@ -51,7 +51,7 @@ func (a *authWrapper) Call(
 	req client.Request, rsp interface{},
 	opts ...client.CallOption,
 ) error {
-	if gc, err := wapper.GinContextFromContext(ctx); err == nil {
+	if gc, err := wrapper.GinContextFromContext(ctx); err == nil {
 		ctx = metadata.Set(ctx, "Authorization", gc.Request.Header.Get("Authorization"))
 	} else {
 		fmt.Println(err.Error())

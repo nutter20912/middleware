@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"middleware/graph/loaders"
 	"middleware/graph/resolver"
-	"middleware/wapper"
+	"middleware/wrapper"
 	"net/http"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -83,7 +83,7 @@ func main() {
 	config.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization"}
 
 	r.Use(cors.New(config))
-	r.Use(wapper.GinContextToContextMiddleware())
+	r.Use(wrapper.GinContextToContextMiddleware())
 	r.Use(loaders.Middleware())
 
 	r.Any("/query", graphqlHandler())

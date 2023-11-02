@@ -211,6 +211,67 @@ func (r *queryResolver) DepositOrder(ctx context.Context, id string) (*model.Dep
 	return order, nil
 }
 
+// SpotPositions is the resolver for the spotPositions field.
+func (r *queryResolver) SpotPositions(ctx context.Context) ([]*model.SpotPosition, error) {
+	rsp, err := grpc.NewOrderServiceClient().GetSpotPosition(ctx, &orderV1.GetSpotPositionRequest{})
+	if err != nil {
+		return nil, err
+	}
+
+	var data []*model.SpotPosition
+	for _, item := range rsp.Data {
+		data = append(data, &model.SpotPosition{
+			ID:           item.Id,
+			UserID:       item.UserId,
+			CreatedAt:    item.CreatedAt,
+			UpdatedAt:    item.UpdatedAt,
+			Symbol:       item.Symbol,
+			Quantity:     item.Quantity,
+			OrderID:      item.OrderId,
+			Price:        item.Price,
+			Fee:          item.Fee,
+			OpenQuantity: item.OpenQuantity,
+			Side: model.OrderSide(
+				strings.TrimPrefix(item.Side.String(), "ORDER_SIDE_"),
+			),
+		})
+	}
+
+	return data, nil
+}
+
+// SpotPositionClosed is the resolver for the spotPositionClosed field.
+func (r *queryResolver) SpotPositionClosed(ctx context.Context) ([]*model.SpotPositionClosed, error) {
+	rsp, err := grpc.NewOrderServiceClient().GetSpotPositionClosed(ctx, &orderV1.GetSpotPositionClosedRequest{})
+	if err != nil {
+		return nil, err
+	}
+
+	var data []*model.SpotPositionClosed
+	for _, item := range rsp.Data {
+		data = append(data, &model.SpotPositionClosed{
+			ID:          item.Id,
+			UserID:      item.UserId,
+			CreatedAt:   item.CreatedAt,
+			Symbol:      item.Symbol,
+			Quantity:    item.Quantity,
+			OpenOrderID: item.OpenOrderId,
+			OpenPrice:   item.OpenPrice,
+			OpenFee:     item.OpenFee,
+
+			CloseOrderID: item.CloseOrderId,
+			ClosePrice:   item.ClosePrice,
+			CloseFee:     item.CloseFee,
+
+			Side: model.OrderSide(
+				strings.TrimPrefix(item.Side.String(), "ORDER_SIDE_"),
+			),
+		})
+	}
+
+	return data, nil
+}
+
 // Wallet is the resolver for the wallet field.
 func (r *subscriptionResolver) Wallet(ctx context.Context, eventCursor *string) (<-chan *model.WalletStream, error) {
 	req := walletV1.GetWalletStreamResquest{}

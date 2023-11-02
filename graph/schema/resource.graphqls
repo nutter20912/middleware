@@ -100,3 +100,45 @@ type DepositOrderEvent {
   memo: String!
   time: String!
 }
+
+
+enum OrderSide {
+  UNSPECIFIED
+  BUY
+  SELL
+}
+
+type SpotPosition {
+  id: ID!
+  user_id: ID!
+  created_at: String!
+  updated_at: String!
+
+  symbol: String!
+  side: OrderSide!
+  quantity: Float!
+
+  order_id: ID!
+  price: Float!
+  fee: Float!
+  open_quantity: Float!
+}
+
+
+type SpotPositionClosed {
+  id: ID!
+  user_id: ID!
+  created_at: String!
+
+  symbol: String!
+  side: OrderSide!
+  quantity: Float!
+
+  open_order_id: ID!
+  open_price: Float!
+  open_fee: Float!
+
+  close_order_id: ID!
+  close_price: Float!
+  close_fee: Float!
+}

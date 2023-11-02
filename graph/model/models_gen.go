@@ -38,6 +38,35 @@ type Posts struct {
 	Paginator *Paginator `json:"paginator,omitempty"`
 }
 
+type SpotPosition struct {
+	ID           string    `json:"id"`
+	UserID       string    `json:"user_id"`
+	CreatedAt    string    `json:"created_at"`
+	UpdatedAt    string    `json:"updated_at"`
+	Symbol       string    `json:"symbol"`
+	Side         OrderSide `json:"side"`
+	Quantity     float64   `json:"quantity"`
+	OrderID      string    `json:"order_id"`
+	Price        float64   `json:"price"`
+	Fee          float64   `json:"fee"`
+	OpenQuantity float64   `json:"open_quantity"`
+}
+
+type SpotPositionClosed struct {
+	ID           string    `json:"id"`
+	UserID       string    `json:"user_id"`
+	CreatedAt    string    `json:"created_at"`
+	Symbol       string    `json:"symbol"`
+	Side         OrderSide `json:"side"`
+	Quantity     float64   `json:"quantity"`
+	OpenOrderID  string    `json:"open_order_id"`
+	OpenPrice    float64   `json:"open_price"`
+	OpenFee      float64   `json:"open_fee"`
+	CloseOrderID string    `json:"close_order_id"`
+	ClosePrice   float64   `json:"close_price"`
+	CloseFee     float64   `json:"close_fee"`
+}
+
 type User struct {
 	ID        string `json:"id"`
 	Name      string `json:"name"`
@@ -117,6 +146,49 @@ func (e *DepositStatus) UnmarshalGQL(v interface{}) error {
 }
 
 func (e DepositStatus) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type OrderSide string
+
+const (
+	OrderSideUnspecified OrderSide = "UNSPECIFIED"
+	OrderSideBuy         OrderSide = "BUY"
+	OrderSideSell        OrderSide = "SELL"
+)
+
+var AllOrderSide = []OrderSide{
+	OrderSideUnspecified,
+	OrderSideBuy,
+	OrderSideSell,
+}
+
+func (e OrderSide) IsValid() bool {
+	switch e {
+	case OrderSideUnspecified, OrderSideBuy, OrderSideSell:
+		return true
+	}
+	return false
+}
+
+func (e OrderSide) String() string {
+	return string(e)
+}
+
+func (e *OrderSide) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = OrderSide(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid OrderSide", str)
+	}
+	return nil
+}
+
+func (e OrderSide) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 

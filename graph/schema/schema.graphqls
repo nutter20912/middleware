@@ -13,6 +13,9 @@ type Query {
   walletEvents(page: Int64, limit: Int64): WalletEvents
 
   depositOrder(id: String!): DepositOrder!
+
+  spotPositions: [SpotPosition]!
+  spotPositionClosed: [SpotPositionClosed]!
 }
 
 type Subscription {
