@@ -91,6 +91,11 @@ type ComplexityRoot struct {
 		NextCursor func(childComplexity int) int
 	}
 
+	PositionStream struct {
+		Closed func(childComplexity int) int
+		Open   func(childComplexity int) int
+	}
+
 	Post struct {
 		Content func(childComplexity int) int
 		ID      func(childComplexity int) int
@@ -146,7 +151,8 @@ type ComplexityRoot struct {
 	}
 
 	Subscription struct {
-		Wallet func(childComplexity int, eventCursor *string) int
+		Position func(childComplexity int, symbol *string) int
+		Wallet   func(childComplexity int, eventCursor *string) int
 	}
 
 	User struct {
@@ -205,6 +211,7 @@ type QueryResolver interface {
 }
 type SubscriptionResolver interface {
 	Wallet(ctx context.Context, eventCursor *string) (<-chan *model.WalletStream, error)
+	Position(ctx context.Context, symbol *string) (<-chan *model.PositionStream, error)
 }
 
 type executableSchema struct {
@@ -396,6 +403,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Paginator.NextCursor(childComplexity), true
+
+	case "PositionStream.closed":
+		if e.complexity.PositionStream.Closed == nil {
+			break
+		}
+
+		return e.complexity.PositionStream.Closed(childComplexity), true
+
+	case "PositionStream.open":
+		if e.complexity.PositionStream.Open == nil {
+			break
+		}
+
+		return e.complexity.PositionStream.Open(childComplexity), true
 
 	case "Post.content":
 		if e.complexity.Post.Content == nil {
@@ -694,6 +715,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.SpotPositionClosed.UserID(childComplexity), true
+
+	case "Subscription.position":
+		if e.complexity.Subscription.Position == nil {
+			break
+		}
+
+		args, err := ec.field_Subscription_position_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Subscription.Position(childComplexity, args["symbol"].(*string)), true
 
 	case "Subscription.wallet":
 		if e.complexity.Subscription.Wallet == nil {
@@ -1106,11 +1139,17 @@ type Query {
 
 type Subscription {
   wallet(event_cursor: String): WalletStream!
+  position(symbol: String): PositionStream!
 }
 
 type WalletStream {
   info: Wallet
   events: [WalletEvent]
+}
+
+type PositionStream {
+  open: [SpotPosition]!
+  closed: [SpotPositionClosed]!
 }
 `, BuiltIn: false},
 }
@@ -1225,6 +1264,21 @@ func (ec *executionContext) field_Query_walletEvents_args(ctx context.Context, r
 		}
 	}
 	args["limit"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Subscription_position_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *string
+	if tmp, ok := rawArgs["symbol"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("symbol"))
+		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["symbol"] = arg0
 	return args, nil
 }
 
@@ -2396,6 +2450,144 @@ func (ec *executionContext) fieldContext_Paginator_next_cursor(ctx context.Conte
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PositionStream_open(ctx context.Context, field graphql.CollectedField, obj *model.PositionStream) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PositionStream_open(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Open, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.SpotPosition)
+	fc.Result = res
+	return ec.marshalNSpotPosition2ᚕᚖmiddlewareᚋgraphᚋmodelᚐSpotPosition(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PositionStream_open(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PositionStream",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_SpotPosition_id(ctx, field)
+			case "user_id":
+				return ec.fieldContext_SpotPosition_user_id(ctx, field)
+			case "created_at":
+				return ec.fieldContext_SpotPosition_created_at(ctx, field)
+			case "updated_at":
+				return ec.fieldContext_SpotPosition_updated_at(ctx, field)
+			case "symbol":
+				return ec.fieldContext_SpotPosition_symbol(ctx, field)
+			case "side":
+				return ec.fieldContext_SpotPosition_side(ctx, field)
+			case "quantity":
+				return ec.fieldContext_SpotPosition_quantity(ctx, field)
+			case "order_id":
+				return ec.fieldContext_SpotPosition_order_id(ctx, field)
+			case "price":
+				return ec.fieldContext_SpotPosition_price(ctx, field)
+			case "fee":
+				return ec.fieldContext_SpotPosition_fee(ctx, field)
+			case "open_quantity":
+				return ec.fieldContext_SpotPosition_open_quantity(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SpotPosition", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PositionStream_closed(ctx context.Context, field graphql.CollectedField, obj *model.PositionStream) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PositionStream_closed(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Closed, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.SpotPositionClosed)
+	fc.Result = res
+	return ec.marshalNSpotPositionClosed2ᚕᚖmiddlewareᚋgraphᚋmodelᚐSpotPositionClosed(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PositionStream_closed(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PositionStream",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_SpotPositionClosed_id(ctx, field)
+			case "user_id":
+				return ec.fieldContext_SpotPositionClosed_user_id(ctx, field)
+			case "created_at":
+				return ec.fieldContext_SpotPositionClosed_created_at(ctx, field)
+			case "symbol":
+				return ec.fieldContext_SpotPositionClosed_symbol(ctx, field)
+			case "side":
+				return ec.fieldContext_SpotPositionClosed_side(ctx, field)
+			case "quantity":
+				return ec.fieldContext_SpotPositionClosed_quantity(ctx, field)
+			case "open_order_id":
+				return ec.fieldContext_SpotPositionClosed_open_order_id(ctx, field)
+			case "open_price":
+				return ec.fieldContext_SpotPositionClosed_open_price(ctx, field)
+			case "open_fee":
+				return ec.fieldContext_SpotPositionClosed_open_fee(ctx, field)
+			case "close_order_id":
+				return ec.fieldContext_SpotPositionClosed_close_order_id(ctx, field)
+			case "close_price":
+				return ec.fieldContext_SpotPositionClosed_close_price(ctx, field)
+			case "close_fee":
+				return ec.fieldContext_SpotPositionClosed_close_fee(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SpotPositionClosed", field.Name)
 		},
 	}
 	return fc, nil
@@ -4497,6 +4689,81 @@ func (ec *executionContext) fieldContext_Subscription_wallet(ctx context.Context
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Subscription_wallet_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Subscription_position(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
+	fc, err := ec.fieldContext_Subscription_position(ctx, field)
+	if err != nil {
+		return nil
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = nil
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Subscription().Position(rctx, fc.Args["symbol"].(*string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return nil
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return nil
+	}
+	return func(ctx context.Context) graphql.Marshaler {
+		select {
+		case res, ok := <-resTmp.(<-chan *model.PositionStream):
+			if !ok {
+				return nil
+			}
+			return graphql.WriterFunc(func(w io.Writer) {
+				w.Write([]byte{'{'})
+				graphql.MarshalString(field.Alias).MarshalGQL(w)
+				w.Write([]byte{':'})
+				ec.marshalNPositionStream2ᚖmiddlewareᚋgraphᚋmodelᚐPositionStream(ctx, field.Selections, res).MarshalGQL(w)
+				w.Write([]byte{'}'})
+			})
+		case <-ctx.Done():
+			return nil
+		}
+	}
+}
+
+func (ec *executionContext) fieldContext_Subscription_position(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Subscription",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "open":
+				return ec.fieldContext_PositionStream_open(ctx, field)
+			case "closed":
+				return ec.fieldContext_PositionStream_closed(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PositionStream", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Subscription_position_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -7490,6 +7757,50 @@ func (ec *executionContext) _Paginator(ctx context.Context, sel ast.SelectionSet
 	return out
 }
 
+var positionStreamImplementors = []string{"PositionStream"}
+
+func (ec *executionContext) _PositionStream(ctx context.Context, sel ast.SelectionSet, obj *model.PositionStream) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, positionStreamImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PositionStream")
+		case "open":
+			out.Values[i] = ec._PositionStream_open(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "closed":
+			out.Values[i] = ec._PositionStream_closed(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var postImplementors = []string{"Post"}
 
 func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj *model.Post) graphql.Marshaler {
@@ -8055,6 +8366,8 @@ func (ec *executionContext) _Subscription(ctx context.Context, sel ast.Selection
 	switch fields[0].Name {
 	case "wallet":
 		return ec._Subscription_wallet(ctx, fields[0])
+	case "position":
+		return ec._Subscription_position(ctx, fields[0])
 	default:
 		panic("unknown field " + strconv.Quote(fields[0].Name))
 	}
@@ -8790,6 +9103,20 @@ func (ec *executionContext) unmarshalNOrderSide2middlewareᚋgraphᚋmodelᚐOrd
 
 func (ec *executionContext) marshalNOrderSide2middlewareᚋgraphᚋmodelᚐOrderSide(ctx context.Context, sel ast.SelectionSet, v model.OrderSide) graphql.Marshaler {
 	return v
+}
+
+func (ec *executionContext) marshalNPositionStream2middlewareᚋgraphᚋmodelᚐPositionStream(ctx context.Context, sel ast.SelectionSet, v model.PositionStream) graphql.Marshaler {
+	return ec._PositionStream(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNPositionStream2ᚖmiddlewareᚋgraphᚋmodelᚐPositionStream(ctx context.Context, sel ast.SelectionSet, v *model.PositionStream) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._PositionStream(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNPost2middlewareᚋgraphᚋmodelᚐPost(ctx context.Context, sel ast.SelectionSet, v model.Post) graphql.Marshaler {

@@ -33,38 +33,14 @@ type Paginator struct {
 	NextCursor *string `json:"next_cursor,omitempty"`
 }
 
+type PositionStream struct {
+	Open   []*SpotPosition       `json:"open"`
+	Closed []*SpotPositionClosed `json:"closed"`
+}
+
 type Posts struct {
 	Data      []*Post    `json:"data"`
 	Paginator *Paginator `json:"paginator,omitempty"`
-}
-
-type SpotPosition struct {
-	ID           string    `json:"id"`
-	UserID       string    `json:"user_id"`
-	CreatedAt    string    `json:"created_at"`
-	UpdatedAt    string    `json:"updated_at"`
-	Symbol       string    `json:"symbol"`
-	Side         OrderSide `json:"side"`
-	Quantity     float64   `json:"quantity"`
-	OrderID      string    `json:"order_id"`
-	Price        float64   `json:"price"`
-	Fee          float64   `json:"fee"`
-	OpenQuantity float64   `json:"open_quantity"`
-}
-
-type SpotPositionClosed struct {
-	ID           string    `json:"id"`
-	UserID       string    `json:"user_id"`
-	CreatedAt    string    `json:"created_at"`
-	Symbol       string    `json:"symbol"`
-	Side         OrderSide `json:"side"`
-	Quantity     float64   `json:"quantity"`
-	OpenOrderID  string    `json:"open_order_id"`
-	OpenPrice    float64   `json:"open_price"`
-	OpenFee      float64   `json:"open_fee"`
-	CloseOrderID string    `json:"close_order_id"`
-	ClosePrice   float64   `json:"close_price"`
-	CloseFee     float64   `json:"close_fee"`
 }
 
 type User struct {

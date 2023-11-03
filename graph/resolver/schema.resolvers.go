@@ -328,6 +328,43 @@ func (r *subscriptionResolver) Wallet(ctx context.Context, eventCursor *string) 
 	return ch, nil
 }
 
+// Position is the resolver for the position field.
+func (r *subscriptionResolver) Position(ctx context.Context, symbol *string) (<-chan *model.PositionStream, error) {
+	req := orderV1.GetPositionStreamResquest{}
+
+	stream, err := grpc.NewOrderServiceClient().GetPositionStream(ctx, &req)
+	if err != nil {
+		transport.AddSubscriptionError(ctx, gqlerror.Wrap(err))
+		return nil, err
+	}
+
+	ch := make(chan *model.PositionStream)
+
+	go func() {
+		defer close(ch)
+
+		for {
+			rsp, err := stream.Recv()
+			if err != nil {
+				transport.AddSubscriptionError(ctx, gqlerror.Wrap(err))
+				return
+			}
+
+			var data *model.PositionStream
+			bytes, _ := json.Marshal(rsp)
+			json.Unmarshal(bytes, &data)
+
+			select {
+			case <-ctx.Done():
+				return
+			case ch <- data:
+			}
+		}
+	}()
+
+	return ch, nil
+}
+
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 

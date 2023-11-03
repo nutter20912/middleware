@@ -20,9 +20,15 @@ type Query {
 
 type Subscription {
   wallet(event_cursor: String): WalletStream!
+  position(symbol: String): PositionStream!
 }
 
 type WalletStream {
   info: Wallet
   events: [WalletEvent]
+}
+
+type PositionStream {
+  open: [SpotPosition]!
+  closed: [SpotPositionClosed]!
 }
