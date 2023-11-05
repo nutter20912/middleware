@@ -90,6 +90,24 @@ type ComplexityRoot struct {
 		UserID  func(childComplexity int) int
 	}
 
+	Kline struct {
+		Close     func(childComplexity int) int
+		EndTime   func(childComplexity int) int
+		High      func(childComplexity int) int
+		Interval  func(childComplexity int) int
+		Low       func(childComplexity int) int
+		Open      func(childComplexity int) int
+		StartTime func(childComplexity int) int
+		Symbol    func(childComplexity int) int
+	}
+
+	KlineData struct {
+		EventTime func(childComplexity int) int
+		EventType func(childComplexity int) int
+		Kline     func(childComplexity int) int
+		Symbol    func(childComplexity int) int
+	}
+
 	PagePaginator struct {
 		CurrentPage func(childComplexity int) int
 		LastPage    func(childComplexity int) int
@@ -168,6 +186,7 @@ type ComplexityRoot struct {
 
 	TradeStream struct {
 		AggTrade func(childComplexity int) int
+		Kline    func(childComplexity int) int
 	}
 
 	User struct {
@@ -433,6 +452,90 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.DepositOrderEvent.UserID(childComplexity), true
+
+	case "Kline.close":
+		if e.complexity.Kline.Close == nil {
+			break
+		}
+
+		return e.complexity.Kline.Close(childComplexity), true
+
+	case "Kline.end_time":
+		if e.complexity.Kline.EndTime == nil {
+			break
+		}
+
+		return e.complexity.Kline.EndTime(childComplexity), true
+
+	case "Kline.high":
+		if e.complexity.Kline.High == nil {
+			break
+		}
+
+		return e.complexity.Kline.High(childComplexity), true
+
+	case "Kline.interval":
+		if e.complexity.Kline.Interval == nil {
+			break
+		}
+
+		return e.complexity.Kline.Interval(childComplexity), true
+
+	case "Kline.low":
+		if e.complexity.Kline.Low == nil {
+			break
+		}
+
+		return e.complexity.Kline.Low(childComplexity), true
+
+	case "Kline.open":
+		if e.complexity.Kline.Open == nil {
+			break
+		}
+
+		return e.complexity.Kline.Open(childComplexity), true
+
+	case "Kline.start_time":
+		if e.complexity.Kline.StartTime == nil {
+			break
+		}
+
+		return e.complexity.Kline.StartTime(childComplexity), true
+
+	case "Kline.symbol":
+		if e.complexity.Kline.Symbol == nil {
+			break
+		}
+
+		return e.complexity.Kline.Symbol(childComplexity), true
+
+	case "KlineData.event_time":
+		if e.complexity.KlineData.EventTime == nil {
+			break
+		}
+
+		return e.complexity.KlineData.EventTime(childComplexity), true
+
+	case "KlineData.event_type":
+		if e.complexity.KlineData.EventType == nil {
+			break
+		}
+
+		return e.complexity.KlineData.EventType(childComplexity), true
+
+	case "KlineData.kline":
+		if e.complexity.KlineData.Kline == nil {
+			break
+		}
+
+		return e.complexity.KlineData.Kline(childComplexity), true
+
+	case "KlineData.symbol":
+		if e.complexity.KlineData.Symbol == nil {
+			break
+		}
+
+		return e.complexity.KlineData.Symbol(childComplexity), true
 
 	case "PagePaginator.current_page":
 		if e.complexity.PagePaginator.CurrentPage == nil {
@@ -824,6 +927,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.TradeStream.AggTrade(childComplexity), true
 
+	case "TradeStream.kline":
+		if e.complexity.TradeStream.Kline == nil {
+			break
+		}
+
+		return e.complexity.TradeStream.Kline(childComplexity), true
+
 	case "User.created_at":
 		if e.complexity.User.CreatedAt == nil {
 			break
@@ -1161,7 +1271,6 @@ type DepositOrderEvent {
   time: String!
 }
 
-
 enum OrderSide {
   UNSPECIFIED
   BUY
@@ -1183,7 +1292,6 @@ type SpotPosition {
   fee: Float!
   open_quantity: Float!
 }
-
 
 type SpotPositionClosed {
   id: ID!
@@ -1207,12 +1315,31 @@ type AggTradeData {
   event_type: String!
   event_time: Uint64!
   symbol: String!
+
   price: Float!
   quantity: Float!
-  transaction_time:Uint64!
+  transaction_time: Uint64!
   is_sell: Boolean!
 }
 
+type KlineData {
+  event_type: String!
+  event_time: Uint64!
+  symbol: String!
+
+  kline: Kline!
+}
+
+type Kline {
+  start_time: Uint64!
+  end_time: Uint64!
+  symbol: String!
+  interval: String!
+  open: String!
+  close: String!
+  high: String!
+  low: String!
+}
 `, BuiltIn: false},
 	{Name: "../schema/schema.graphqls", Input: `# GraphQL schema example
 #
@@ -1251,7 +1378,8 @@ type PositionStream {
 }
 
 type TradeStream {
-  agg_trade: AggTradeData!
+  agg_trade: AggTradeData
+  kline: KlineData
 }
 `, BuiltIn: false},
 }
@@ -2670,6 +2798,552 @@ func (ec *executionContext) fieldContext_DepositOrderEvent_time(ctx context.Cont
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Kline_start_time(ctx context.Context, field graphql.CollectedField, obj *model.Kline) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Kline_start_time(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.StartTime, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(uint64)
+	fc.Result = res
+	return ec.marshalNUint642uint64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Kline_start_time(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Kline",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Uint64 does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Kline_end_time(ctx context.Context, field graphql.CollectedField, obj *model.Kline) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Kline_end_time(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.EndTime, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(uint64)
+	fc.Result = res
+	return ec.marshalNUint642uint64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Kline_end_time(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Kline",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Uint64 does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Kline_symbol(ctx context.Context, field graphql.CollectedField, obj *model.Kline) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Kline_symbol(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Symbol, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Kline_symbol(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Kline",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Kline_interval(ctx context.Context, field graphql.CollectedField, obj *model.Kline) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Kline_interval(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Interval, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Kline_interval(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Kline",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Kline_open(ctx context.Context, field graphql.CollectedField, obj *model.Kline) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Kline_open(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Open, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Kline_open(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Kline",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Kline_close(ctx context.Context, field graphql.CollectedField, obj *model.Kline) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Kline_close(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Close, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Kline_close(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Kline",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Kline_high(ctx context.Context, field graphql.CollectedField, obj *model.Kline) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Kline_high(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.High, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Kline_high(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Kline",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Kline_low(ctx context.Context, field graphql.CollectedField, obj *model.Kline) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Kline_low(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Low, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Kline_low(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Kline",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _KlineData_event_type(ctx context.Context, field graphql.CollectedField, obj *model.KlineData) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_KlineData_event_type(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.EventType, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_KlineData_event_type(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "KlineData",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _KlineData_event_time(ctx context.Context, field graphql.CollectedField, obj *model.KlineData) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_KlineData_event_time(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.EventTime, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(uint64)
+	fc.Result = res
+	return ec.marshalNUint642uint64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_KlineData_event_time(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "KlineData",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Uint64 does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _KlineData_symbol(ctx context.Context, field graphql.CollectedField, obj *model.KlineData) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_KlineData_symbol(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Symbol, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_KlineData_symbol(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "KlineData",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _KlineData_kline(ctx context.Context, field graphql.CollectedField, obj *model.KlineData) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_KlineData_kline(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Kline, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Kline)
+	fc.Result = res
+	return ec.marshalNKline2ᚖmiddlewareᚋgraphᚋmodelᚐKline(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_KlineData_kline(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "KlineData",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "start_time":
+				return ec.fieldContext_Kline_start_time(ctx, field)
+			case "end_time":
+				return ec.fieldContext_Kline_end_time(ctx, field)
+			case "symbol":
+				return ec.fieldContext_Kline_symbol(ctx, field)
+			case "interval":
+				return ec.fieldContext_Kline_interval(ctx, field)
+			case "open":
+				return ec.fieldContext_Kline_open(ctx, field)
+			case "close":
+				return ec.fieldContext_Kline_close(ctx, field)
+			case "high":
+				return ec.fieldContext_Kline_high(ctx, field)
+			case "low":
+				return ec.fieldContext_Kline_low(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Kline", field.Name)
 		},
 	}
 	return fc, nil
@@ -5250,6 +5924,8 @@ func (ec *executionContext) fieldContext_Subscription_trade(ctx context.Context,
 			switch field.Name {
 			case "agg_trade":
 				return ec.fieldContext_TradeStream_agg_trade(ctx, field)
+			case "kline":
+				return ec.fieldContext_TradeStream_kline(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TradeStream", field.Name)
 		},
@@ -5289,14 +5965,11 @@ func (ec *executionContext) _TradeStream_agg_trade(ctx context.Context, field gr
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(*model.AggTradeData)
 	fc.Result = res
-	return ec.marshalNAggTradeData2ᚖmiddlewareᚋgraphᚋmodelᚐAggTradeData(ctx, field.Selections, res)
+	return ec.marshalOAggTradeData2ᚖmiddlewareᚋgraphᚋmodelᚐAggTradeData(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TradeStream_agg_trade(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5323,6 +5996,57 @@ func (ec *executionContext) fieldContext_TradeStream_agg_trade(ctx context.Conte
 				return ec.fieldContext_AggTradeData_is_sell(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type AggTradeData", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TradeStream_kline(ctx context.Context, field graphql.CollectedField, obj *model.TradeStream) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TradeStream_kline(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Kline, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.KlineData)
+	fc.Result = res
+	return ec.marshalOKlineData2ᚖmiddlewareᚋgraphᚋmodelᚐKlineData(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TradeStream_kline(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TradeStream",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "event_type":
+				return ec.fieldContext_KlineData_event_type(ctx, field)
+			case "event_time":
+				return ec.fieldContext_KlineData_event_time(ctx, field)
+			case "symbol":
+				return ec.fieldContext_KlineData_symbol(ctx, field)
+			case "kline":
+				return ec.fieldContext_KlineData_kline(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type KlineData", field.Name)
 		},
 	}
 	return fc, nil
@@ -8306,6 +9030,134 @@ func (ec *executionContext) _DepositOrderEvent(ctx context.Context, sel ast.Sele
 	return out
 }
 
+var klineImplementors = []string{"Kline"}
+
+func (ec *executionContext) _Kline(ctx context.Context, sel ast.SelectionSet, obj *model.Kline) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, klineImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Kline")
+		case "start_time":
+			out.Values[i] = ec._Kline_start_time(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "end_time":
+			out.Values[i] = ec._Kline_end_time(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "symbol":
+			out.Values[i] = ec._Kline_symbol(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "interval":
+			out.Values[i] = ec._Kline_interval(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "open":
+			out.Values[i] = ec._Kline_open(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "close":
+			out.Values[i] = ec._Kline_close(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "high":
+			out.Values[i] = ec._Kline_high(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "low":
+			out.Values[i] = ec._Kline_low(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var klineDataImplementors = []string{"KlineData"}
+
+func (ec *executionContext) _KlineData(ctx context.Context, sel ast.SelectionSet, obj *model.KlineData) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, klineDataImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("KlineData")
+		case "event_type":
+			out.Values[i] = ec._KlineData_event_type(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "event_time":
+			out.Values[i] = ec._KlineData_event_time(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "symbol":
+			out.Values[i] = ec._KlineData_symbol(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "kline":
+			out.Values[i] = ec._KlineData_kline(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var pagePaginatorImplementors = []string{"PagePaginator"}
 
 func (ec *executionContext) _PagePaginator(ctx context.Context, sel ast.SelectionSet, obj *model.PagePaginator) graphql.Marshaler {
@@ -9015,9 +9867,8 @@ func (ec *executionContext) _TradeStream(ctx context.Context, sel ast.SelectionS
 			out.Values[i] = graphql.MarshalString("TradeStream")
 		case "agg_trade":
 			out.Values[i] = ec._TradeStream_agg_trade(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
+		case "kline":
+			out.Values[i] = ec._TradeStream_kline(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -9618,16 +10469,6 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) marshalNAggTradeData2ᚖmiddlewareᚋgraphᚋmodelᚐAggTradeData(ctx context.Context, sel ast.SelectionSet, v *model.AggTradeData) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._AggTradeData(ctx, sel, v)
-}
-
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -9771,6 +10612,16 @@ func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.Selec
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNKline2ᚖmiddlewareᚋgraphᚋmodelᚐKline(ctx context.Context, sel ast.SelectionSet, v *model.Kline) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Kline(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNOrderSide2middlewareᚋgraphᚋmodelᚐOrderSide(ctx context.Context, v interface{}) (model.OrderSide, error) {
@@ -10298,6 +11149,13 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
+func (ec *executionContext) marshalOAggTradeData2ᚖmiddlewareᚋgraphᚋmodelᚐAggTradeData(ctx context.Context, sel ast.SelectionSet, v *model.AggTradeData) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._AggTradeData(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -10375,6 +11233,13 @@ func (ec *executionContext) marshalOInt642ᚖint64(ctx context.Context, sel ast.
 	}
 	res := graphql.MarshalInt64(*v)
 	return res
+}
+
+func (ec *executionContext) marshalOKlineData2ᚖmiddlewareᚋgraphᚋmodelᚐKlineData(ctx context.Context, sel ast.SelectionSet, v *model.KlineData) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._KlineData(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOPagePaginator2ᚖmiddlewareᚋgraphᚋmodelᚐPagePaginator(ctx context.Context, sel ast.SelectionSet, v *model.PagePaginator) graphql.Marshaler {

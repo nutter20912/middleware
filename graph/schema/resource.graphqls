@@ -103,7 +103,6 @@ type DepositOrderEvent {
   time: String!
 }
 
-
 enum OrderSide {
   UNSPECIFIED
   BUY
@@ -125,7 +124,6 @@ type SpotPosition {
   fee: Float!
   open_quantity: Float!
 }
-
 
 type SpotPositionClosed {
   id: ID!
@@ -149,9 +147,28 @@ type AggTradeData {
   event_type: String!
   event_time: Uint64!
   symbol: String!
+
   price: Float!
   quantity: Float!
-  transaction_time:Uint64!
+  transaction_time: Uint64!
   is_sell: Boolean!
 }
 
+type KlineData {
+  event_type: String!
+  event_time: Uint64!
+  symbol: String!
+
+  kline: Kline!
+}
+
+type Kline {
+  start_time: Uint64!
+  end_time: Uint64!
+  symbol: String!
+  interval: String!
+  open: String!
+  close: String!
+  high: String!
+  low: String!
+}

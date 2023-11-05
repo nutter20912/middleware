@@ -22,6 +22,24 @@ type DepositOrderEvent struct {
 	Time    string        `json:"time"`
 }
 
+type Kline struct {
+	StartTime uint64 `json:"start_time"`
+	EndTime   uint64 `json:"end_time"`
+	Symbol    string `json:"symbol"`
+	Interval  string `json:"interval"`
+	Open      string `json:"open"`
+	Close     string `json:"close"`
+	High      string `json:"high"`
+	Low       string `json:"low"`
+}
+
+type KlineData struct {
+	EventType string `json:"event_type"`
+	EventTime uint64 `json:"event_time"`
+	Symbol    string `json:"symbol"`
+	Kline     *Kline `json:"kline"`
+}
+
 type PagePaginator struct {
 	CurrentPage *int `json:"current_page,omitempty"`
 	LastPage    *int `json:"last_page,omitempty"`
@@ -44,7 +62,8 @@ type Posts struct {
 }
 
 type TradeStream struct {
-	AggTrade *AggTradeData `json:"agg_trade"`
+	AggTrade *AggTradeData `json:"agg_trade,omitempty"`
+	Kline    *KlineData    `json:"kline,omitempty"`
 }
 
 type User struct {

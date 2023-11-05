@@ -387,9 +387,37 @@ func (r *subscriptionResolver) Trade(ctx context.Context, symbol *string) (<-cha
 				return
 			}
 
-			var data *model.TradeStream
-			bytes, _ := json.Marshal(rsp)
-			json.Unmarshal(bytes, &data)
+			data := &model.TradeStream{}
+
+			switch val := rsp.Data.(type) {
+			case *marketV1.GetTradeStreamResponse_AggTradeData:
+				data.AggTrade = &model.AggTradeData{
+					EventType:       val.AggTradeData.EventType,
+					EventTime:       val.AggTradeData.EventTime,
+					Symbol:          val.AggTradeData.Symbol,
+					Price:           val.AggTradeData.Price,
+					Quantity:        val.AggTradeData.Quantity,
+					TransactionTime: val.AggTradeData.TransactionTime,
+					IsSell:          val.AggTradeData.IsSell,
+				}
+
+			case *marketV1.GetTradeStreamResponse_KlineData:
+				data.Kline = &model.KlineData{
+					EventType: val.KlineData.EventType,
+					EventTime: val.KlineData.EventTime,
+					Symbol:    val.KlineData.Symbol,
+					Kline: &model.Kline{
+						StartTime: val.KlineData.Kline.StartTime,
+						EndTime:   val.KlineData.Kline.EndTime,
+						Symbol:    val.KlineData.Kline.Symbol,
+						Interval:  val.KlineData.Kline.Interval,
+						Open:      val.KlineData.Kline.Open,
+						Close:     val.KlineData.Kline.Close,
+						High:      val.KlineData.Kline.High,
+						Low:       val.KlineData.Kline.Low,
+					},
+				}
+			}
 
 			select {
 			case <-ctx.Done():
