@@ -13,5 +13,18 @@
 - [go-delve/delve](https://github.com/go-delve/delve)
 
 ---
+### Develop
+1. Define schema
+    ```
+    ./graph/schema
+    ├── resource.graphqls
+    └── schema.graphqls
+    ```
+2. Configuration `./gqlgen.yml`
+3. Run `make`
+4. Implement the resolvers `./graph/resolver/`
+> more to see doc [here](https://gqlgen.com/)
+
+---
 ## Scripts
 read Makefile
