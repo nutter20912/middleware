@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	boardV1 "middleware/proto/board/v1"
+	marketV1 "middleware/proto/market/v1"
 	orderV1 "middleware/proto/order/v1"
 	userV1 "middleware/proto/user/v1"
 	walletV1 "middleware/proto/wallet/v1"
@@ -26,6 +27,7 @@ var (
 	BOARD_SERVICE_NAME  = "srv.board"
 	WALLET_SERVICE_NAME = "srv.wallet"
 	ORDER_SERVICE_NAME  = "srv.order"
+	MARKET_SERVICE_NAME = "srv.market"
 )
 
 var (
@@ -78,4 +80,8 @@ func NewWalletServiceClient() walletV1.WalletService {
 
 func NewOrderServiceClient() orderV1.OrderService {
 	return orderV1.NewOrderService(ORDER_SERVICE_NAME, service.Client())
+}
+
+func NewMarketServiceClient() marketV1.MarketService {
+	return marketV1.NewMarketService(MARKET_SERVICE_NAME, service.Client())
 }

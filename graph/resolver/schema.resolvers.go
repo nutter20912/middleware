@@ -11,6 +11,7 @@ import (
 	"middleware/api/grpc"
 	"middleware/graph/model"
 	boardV1 "middleware/proto/board/v1"
+	marketV1 "middleware/proto/market/v1"
 	orderV1 "middleware/proto/order/v1"
 	walletV1 "middleware/proto/wallet/v1"
 	"strings"
@@ -351,6 +352,42 @@ func (r *subscriptionResolver) Position(ctx context.Context, symbol *string) (<-
 			}
 
 			var data *model.PositionStream
+			bytes, _ := json.Marshal(rsp)
+			json.Unmarshal(bytes, &data)
+
+			select {
+			case <-ctx.Done():
+				return
+			case ch <- data:
+			}
+		}
+	}()
+
+	return ch, nil
+}
+
+// Trade is the resolver for the trade field.
+func (r *subscriptionResolver) Trade(ctx context.Context, symbol *string) (<-chan *model.TradeStream, error) {
+	req := marketV1.GetTradeStreamResquest{Symbol: symbol}
+	stream, err := grpc.NewMarketServiceClient().GetTradeStream(ctx, &req)
+	if err != nil {
+		transport.AddSubscriptionError(ctx, gqlerror.Wrap(err))
+		return nil, err
+	}
+
+	ch := make(chan *model.TradeStream)
+
+	go func() {
+		defer close(ch)
+
+		for {
+			rsp, err := stream.Recv()
+			if err != nil {
+				transport.AddSubscriptionError(ctx, gqlerror.Wrap(err))
+				return
+			}
+
+			var data *model.TradeStream
 			bytes, _ := json.Marshal(rsp)
 			json.Unmarshal(bytes, &data)
 

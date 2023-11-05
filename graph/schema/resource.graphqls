@@ -1,3 +1,5 @@
+scalar Uint64
+
 type Paginator {
   next_cursor: String
 }
@@ -142,3 +144,14 @@ type SpotPositionClosed {
   close_price: Float!
   close_fee: Float!
 }
+
+type AggTradeData {
+  event_type: String!
+  event_time: Uint64!
+  symbol: String!
+  price: Float!
+  quantity: Float!
+  transaction_time:Uint64!
+  is_sell: Boolean!
+}
+

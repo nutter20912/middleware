@@ -21,6 +21,7 @@ type Query {
 type Subscription {
   wallet(event_cursor: String): WalletStream!
   position(symbol: String): PositionStream!
+  trade(symbol: String): TradeStream!
 }
 
 type WalletStream {
@@ -31,4 +32,8 @@ type WalletStream {
 type PositionStream {
   open: [SpotPosition]!
   closed: [SpotPositionClosed]!
+}
+
+type TradeStream {
+  agg_trade: AggTradeData!
 }

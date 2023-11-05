@@ -88,6 +88,9 @@ models:
   Int64:
     model:
       - github.com/99designs/gqlgen/graphql.Int64
+  Uint64:
+    model:
+      - github.com/99designs/gqlgen/graphql.Uint64
   Post:
     fields:
       user:

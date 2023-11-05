@@ -111,3 +111,13 @@ func (s *SpotPosition) UnmarshalJSON(data []byte) error {
 
 	return nil
 }
+
+type AggTradeData struct {
+	EventType       string  `json:"event_type"`
+	EventTime       uint64  `json:"event_time"`
+	Symbol          string  `json:"symbol"`
+	Price           float64 `json:"price"`
+	Quantity        float64 `json:"quantity"`
+	TransactionTime uint64  `json:"transaction_time"`
+	IsSell          bool    `json:"is_sell"`
+}

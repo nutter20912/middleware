@@ -43,6 +43,10 @@ type Posts struct {
 	Paginator *Paginator `json:"paginator,omitempty"`
 }
 
+type TradeStream struct {
+	AggTrade *AggTradeData `json:"agg_trade"`
+}
+
 type User struct {
 	ID        string `json:"id"`
 	Name      string `json:"name"`
