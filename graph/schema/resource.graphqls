@@ -172,3 +172,9 @@ type Kline {
   high: String!
   low: String!
 }
+
+
+type DepthData {
+  bids:[[String!]]!
+  asks:[[String!]]!
+}

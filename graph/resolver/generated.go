@@ -90,6 +90,11 @@ type ComplexityRoot struct {
 		UserID  func(childComplexity int) int
 	}
 
+	DepthData struct {
+		Asks func(childComplexity int) int
+		Bids func(childComplexity int) int
+	}
+
 	Kline struct {
 		Close     func(childComplexity int) int
 		EndTime   func(childComplexity int) int
@@ -186,6 +191,7 @@ type ComplexityRoot struct {
 
 	TradeStream struct {
 		AggTrade func(childComplexity int) int
+		Depth    func(childComplexity int) int
 		Kline    func(childComplexity int) int
 	}
 
@@ -452,6 +458,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.DepositOrderEvent.UserID(childComplexity), true
+
+	case "DepthData.asks":
+		if e.complexity.DepthData.Asks == nil {
+			break
+		}
+
+		return e.complexity.DepthData.Asks(childComplexity), true
+
+	case "DepthData.bids":
+		if e.complexity.DepthData.Bids == nil {
+			break
+		}
+
+		return e.complexity.DepthData.Bids(childComplexity), true
 
 	case "Kline.close":
 		if e.complexity.Kline.Close == nil {
@@ -927,6 +947,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.TradeStream.AggTrade(childComplexity), true
 
+	case "TradeStream.depth":
+		if e.complexity.TradeStream.Depth == nil {
+			break
+		}
+
+		return e.complexity.TradeStream.Depth(childComplexity), true
+
 	case "TradeStream.kline":
 		if e.complexity.TradeStream.Kline == nil {
 			break
@@ -1340,6 +1367,12 @@ type Kline {
   high: String!
   low: String!
 }
+
+
+type DepthData {
+  bids:[[String!]]!
+  asks:[[String!]]!
+}
 `, BuiltIn: false},
 	{Name: "../schema/schema.graphqls", Input: `# GraphQL schema example
 #
@@ -1376,10 +1409,11 @@ type PositionStream {
   open: [SpotPosition]!
   closed: [SpotPositionClosed]!
 }
-
+# TODO 改成 Interface or Union
 type TradeStream {
   agg_trade: AggTradeData
   kline: KlineData
+  depth: DepthData
 }
 `, BuiltIn: false},
 }
@@ -2793,6 +2827,94 @@ func (ec *executionContext) _DepositOrderEvent_time(ctx context.Context, field g
 func (ec *executionContext) fieldContext_DepositOrderEvent_time(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "DepositOrderEvent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DepthData_bids(ctx context.Context, field graphql.CollectedField, obj *model.DepthData) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DepthData_bids(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Bids, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([][]string)
+	fc.Result = res
+	return ec.marshalNString2ᚕᚕstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DepthData_bids(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DepthData",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DepthData_asks(ctx context.Context, field graphql.CollectedField, obj *model.DepthData) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DepthData_asks(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Asks, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([][]string)
+	fc.Result = res
+	return ec.marshalNString2ᚕᚕstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DepthData_asks(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DepthData",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -5926,6 +6048,8 @@ func (ec *executionContext) fieldContext_Subscription_trade(ctx context.Context,
 				return ec.fieldContext_TradeStream_agg_trade(ctx, field)
 			case "kline":
 				return ec.fieldContext_TradeStream_kline(ctx, field)
+			case "depth":
+				return ec.fieldContext_TradeStream_depth(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TradeStream", field.Name)
 		},
@@ -6047,6 +6171,53 @@ func (ec *executionContext) fieldContext_TradeStream_kline(ctx context.Context, 
 				return ec.fieldContext_KlineData_kline(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type KlineData", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TradeStream_depth(ctx context.Context, field graphql.CollectedField, obj *model.TradeStream) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TradeStream_depth(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Depth, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.DepthData)
+	fc.Result = res
+	return ec.marshalODepthData2ᚖmiddlewareᚋgraphᚋmodelᚐDepthData(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TradeStream_depth(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TradeStream",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "bids":
+				return ec.fieldContext_DepthData_bids(ctx, field)
+			case "asks":
+				return ec.fieldContext_DepthData_asks(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DepthData", field.Name)
 		},
 	}
 	return fc, nil
@@ -9030,6 +9201,50 @@ func (ec *executionContext) _DepositOrderEvent(ctx context.Context, sel ast.Sele
 	return out
 }
 
+var depthDataImplementors = []string{"DepthData"}
+
+func (ec *executionContext) _DepthData(ctx context.Context, sel ast.SelectionSet, obj *model.DepthData) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, depthDataImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DepthData")
+		case "bids":
+			out.Values[i] = ec._DepthData_bids(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "asks":
+			out.Values[i] = ec._DepthData_asks(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var klineImplementors = []string{"Kline"}
 
 func (ec *executionContext) _Kline(ctx context.Context, sel ast.SelectionSet, obj *model.Kline) graphql.Marshaler {
@@ -9869,6 +10084,8 @@ func (ec *executionContext) _TradeStream(ctx context.Context, sel ast.SelectionS
 			out.Values[i] = ec._TradeStream_agg_trade(ctx, field, obj)
 		case "kline":
 			out.Values[i] = ec._TradeStream_kline(ctx, field, obj)
+		case "depth":
+			out.Values[i] = ec._TradeStream_depth(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -10791,6 +11008,32 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
+func (ec *executionContext) unmarshalNString2ᚕᚕstring(ctx context.Context, v interface{}) ([][]string, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([][]string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalOString2ᚕstringᚄ(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNString2ᚕᚕstring(ctx context.Context, sel ast.SelectionSet, v [][]string) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalOString2ᚕstringᚄ(ctx, sel, v[i])
+	}
+
+	return ret
+}
+
 func (ec *executionContext) marshalNTradeStream2middlewareᚋgraphᚋmodelᚐTradeStream(ctx context.Context, sel ast.SelectionSet, v model.TradeStream) graphql.Marshaler {
 	return ec._TradeStream(ctx, sel, &v)
 }
@@ -11203,6 +11446,13 @@ func (ec *executionContext) marshalODepositOrderEvent2ᚖmiddlewareᚋgraphᚋmo
 	return ec._DepositOrderEvent(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalODepthData2ᚖmiddlewareᚋgraphᚋmodelᚐDepthData(ctx context.Context, sel ast.SelectionSet, v *model.DepthData) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._DepthData(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {
 	if v == nil {
 		return nil, nil
@@ -11282,6 +11532,44 @@ func (ec *executionContext) marshalOSpotPositionClosed2ᚖmiddlewareᚋgraphᚋm
 		return graphql.Null
 	}
 	return ec._SpotPositionClosed(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOString2ᚕstringᚄ(ctx context.Context, v interface{}) ([]string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNString2string(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOString2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNString2string(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v interface{}) (*string, error) {

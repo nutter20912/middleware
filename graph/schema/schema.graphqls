@@ -37,4 +37,5 @@ type PositionStream {
 type TradeStream {
   agg_trade: AggTradeData
   kline: KlineData
+  depth: DepthData
 }

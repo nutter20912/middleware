@@ -22,6 +22,11 @@ type DepositOrderEvent struct {
 	Time    string        `json:"time"`
 }
 
+type DepthData struct {
+	Bids [][]string `json:"bids"`
+	Asks [][]string `json:"asks"`
+}
+
 type Kline struct {
 	StartTime uint64 `json:"start_time"`
 	EndTime   uint64 `json:"end_time"`
@@ -64,6 +69,7 @@ type Posts struct {
 type TradeStream struct {
 	AggTrade *AggTradeData `json:"agg_trade,omitempty"`
 	Kline    *KlineData    `json:"kline,omitempty"`
+	Depth    *DepthData    `json:"depth,omitempty"`
 }
 
 type User struct {

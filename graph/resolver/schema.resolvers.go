@@ -417,6 +417,20 @@ func (r *subscriptionResolver) Trade(ctx context.Context, symbol *string) (<-cha
 						Low:       val.KlineData.Kline.Low,
 					},
 				}
+
+			case *marketV1.GetTradeStreamResponse_DepthData:
+				data.Depth = &model.DepthData{
+					Asks: [][]string{},
+					Bids: [][]string{},
+				}
+
+				for _, v := range val.DepthData.Asks {
+					data.Depth.Asks = append(data.Depth.Asks, v.PriceAndQty)
+				}
+
+				for _, v := range val.DepthData.Bids {
+					data.Depth.Bids = append(data.Depth.Bids, v.PriceAndQty)
+				}
 			}
 
 			select {
