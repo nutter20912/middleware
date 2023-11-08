@@ -2,6 +2,7 @@ package model
 
 import (
 	"encoding/json"
+	"fmt"
 	orderV1 "middleware/proto/order/v1"
 	"strings"
 )
@@ -120,4 +121,58 @@ type AggTradeData struct {
 	Quantity        float64 `json:"quantity"`
 	TransactionTime uint64  `json:"transaction_time"`
 	IsSell          bool    `json:"is_sell"`
+}
+
+func (e *OrderSide) UnmarshalJSON(v []byte) error {
+	var temp orderV1.OrderSide
+	json.Unmarshal(v, &temp)
+
+	if temp != orderV1.OrderSide_ORDER_SIDE_UNSPECIFIED {
+		*e = OrderSide(strings.TrimPrefix(temp.String(), "ORDER_SIDE_"))
+	} else {
+		str := string(v)
+		*e = OrderSide(str)
+	}
+
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid OrderSide", string(v))
+	}
+
+	return nil
+}
+
+func (e *OrderType) UnmarshalJSON(v []byte) error {
+	var temp orderV1.OrderType
+	json.Unmarshal(v, &temp)
+
+	if temp != orderV1.OrderType_ORDER_TYPE_UNSPECIFIED {
+		*e = OrderType(strings.TrimPrefix(temp.String(), "ORDER_TYPE_"))
+	} else {
+		str := string(v)
+		*e = OrderType(str)
+	}
+
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid OrderType", string(v))
+	}
+
+	return nil
+}
+
+func (e *OrderStatus) UnmarshalJSON(v []byte) error {
+	var temp orderV1.SpotStatus
+	json.Unmarshal(v, &temp)
+
+	if temp != orderV1.SpotStatus_SPOT_STATUS_UNSPECIFIED {
+		*e = OrderStatus(strings.TrimPrefix(temp.String(), "SPOT_STATUS_"))
+	} else {
+		str := string(v)
+		*e = OrderStatus(str)
+	}
+
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid OrderType", string(v))
+	}
+
+	return nil
 }

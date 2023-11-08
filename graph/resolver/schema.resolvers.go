@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"middleware/api/grpc"
 	"middleware/graph/model"
 	boardV1 "middleware/proto/board/v1"
@@ -432,6 +433,47 @@ func (r *subscriptionResolver) Trade(ctx context.Context, symbol *string) (<-cha
 					data.Depth.Bids = append(data.Depth.Bids, v.PriceAndQty)
 				}
 			}
+
+			select {
+			case <-ctx.Done():
+				return
+			case ch <- data:
+			}
+		}
+	}()
+
+	return ch, nil
+}
+
+// SpotOrderEvent is the resolver for the spotOrderEvent field.
+func (r *subscriptionResolver) SpotOrderEvent(ctx context.Context, orderID string) (<-chan *model.SpotOrderEvent, error) {
+	req := orderV1.GetSpotEventStreamRequest{OrderId: orderID}
+
+	stream, err := grpc.NewOrderServiceClient().GetSpotEventStream(ctx, &req)
+	if err != nil {
+		transport.AddSubscriptionError(ctx, gqlerror.Wrap(err))
+		return nil, err
+	}
+
+	ch := make(chan *model.SpotOrderEvent)
+
+	go func() {
+		defer close(ch)
+
+		for {
+			rsp, err := stream.Recv()
+			if err == io.EOF {
+				return
+			}
+
+			if err != nil {
+				transport.AddSubscriptionError(ctx, gqlerror.Wrap(err))
+				return
+			}
+
+			var data *model.SpotOrderEvent
+			bytes, _ := json.Marshal(rsp.Data)
+			json.Unmarshal(bytes, &data)
 
 			select {
 			case <-ctx.Done():

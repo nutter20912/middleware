@@ -66,6 +66,19 @@ type Posts struct {
 	Paginator *Paginator `json:"paginator,omitempty"`
 }
 
+type SpotOrderEvent struct {
+	UserID   string      `json:"user_id"`
+	OrderID  string      `json:"order_id"`
+	Time     string      `json:"time"`
+	Symbol   string      `json:"symbol"`
+	Quantity float64     `json:"quantity"`
+	Side     OrderSide   `json:"side"`
+	Type     OrderType   `json:"type"`
+	Status   OrderStatus `json:"status"`
+	Price    float64     `json:"price"`
+	Memo     string      `json:"memo"`
+}
+
 type TradeStream struct {
 	AggTrade *AggTradeData `json:"agg_trade,omitempty"`
 	Kline    *KlineData    `json:"kline,omitempty"`
@@ -194,6 +207,98 @@ func (e *OrderSide) UnmarshalGQL(v interface{}) error {
 }
 
 func (e OrderSide) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type OrderStatus string
+
+const (
+	OrderStatusUnspecified OrderStatus = "UNSPECIFIED"
+	OrderStatusNew         OrderStatus = "NEW"
+	OrderStatusPenn        OrderStatus = "PENN"
+	OrderStatusCanceled    OrderStatus = "CANCELED"
+	OrderStatusFilled      OrderStatus = "FILLED"
+	OrderStatusRejected    OrderStatus = "REJECTED"
+)
+
+var AllOrderStatus = []OrderStatus{
+	OrderStatusUnspecified,
+	OrderStatusNew,
+	OrderStatusPenn,
+	OrderStatusCanceled,
+	OrderStatusFilled,
+	OrderStatusRejected,
+}
+
+func (e OrderStatus) IsValid() bool {
+	switch e {
+	case OrderStatusUnspecified, OrderStatusNew, OrderStatusPenn, OrderStatusCanceled, OrderStatusFilled, OrderStatusRejected:
+		return true
+	}
+	return false
+}
+
+func (e OrderStatus) String() string {
+	return string(e)
+}
+
+func (e *OrderStatus) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = OrderStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid OrderStatus", str)
+	}
+	return nil
+}
+
+func (e OrderStatus) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type OrderType string
+
+const (
+	OrderTypeUnspecified OrderType = "UNSPECIFIED"
+	OrderTypeLimit       OrderType = "LIMIT"
+	OrderTypeMarket      OrderType = "MARKET"
+)
+
+var AllOrderType = []OrderType{
+	OrderTypeUnspecified,
+	OrderTypeLimit,
+	OrderTypeMarket,
+}
+
+func (e OrderType) IsValid() bool {
+	switch e {
+	case OrderTypeUnspecified, OrderTypeLimit, OrderTypeMarket:
+		return true
+	}
+	return false
+}
+
+func (e OrderType) String() string {
+	return string(e)
+}
+
+func (e *OrderType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = OrderType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid OrderType", str)
+	}
+	return nil
+}
+
+func (e OrderType) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 

@@ -109,6 +109,34 @@ enum OrderSide {
   SELL
 }
 
+enum OrderType {
+  UNSPECIFIED
+  LIMIT
+  MARKET
+}
+enum OrderStatus {
+  UNSPECIFIED
+  NEW
+  PENN
+  CANCELED
+  FILLED
+  REJECTED
+}
+
+type SpotOrderEvent {
+  user_id: ID!
+  order_id: ID!
+  time: String!
+
+  symbol: String!
+  quantity: Float!
+  side: OrderSide!
+  type: OrderType!
+  status: OrderStatus!
+  price: Float!
+  memo: String!
+}
+
 type SpotPosition {
   id: ID!
   user_id: ID!
@@ -173,8 +201,7 @@ type Kline {
   low: String!
 }
 
-
 type DepthData {
-  bids:[[String!]]!
-  asks:[[String!]]!
+  bids: [[String!]]!
+  asks: [[String!]]!
 }
