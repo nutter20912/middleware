@@ -486,6 +486,40 @@ func (r *subscriptionResolver) SpotOrderEvent(ctx context.Context, orderID strin
 	return ch, nil
 }
 
+// Notify is the resolver for the notify field.
+func (r *subscriptionResolver) Notify(ctx context.Context) (<-chan interface{}, error) {
+	stream, err := grpc.NewNotifyServiceClient().GetStream(ctx, &emptypb.Empty{})
+	if err != nil {
+		transport.AddSubscriptionError(ctx, gqlerror.Wrap(err))
+		return nil, err
+	}
+
+	ch := make(chan interface{})
+
+	go func() {
+		defer close(ch)
+
+		for {
+			rsp, err := stream.Recv()
+			if err != nil {
+				transport.AddSubscriptionError(ctx, gqlerror.Wrap(err))
+				return
+			}
+
+			var data interface{}
+			json.Unmarshal(rsp.Data.Payload, &data)
+
+			select {
+			case <-ctx.Done():
+				return
+			case ch <- data:
+			}
+		}
+	}()
+
+	return ch, nil
+}
+
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 

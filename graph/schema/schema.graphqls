@@ -2,6 +2,7 @@
 #
 # https://gqlgen.com/getting-started/
 scalar Int64
+scalar Any
 
 type Query {
   user: User!
@@ -23,6 +24,7 @@ type Subscription {
   position(symbol: String): PositionStream!
   trade(symbol: String): TradeStream!
   spotOrderEvent(order_id: String!): SpotOrderEvent!
+  notify: Any!
 }
 
 type WalletStream {

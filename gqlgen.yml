@@ -91,6 +91,9 @@ models:
   Uint64:
     model:
       - github.com/99designs/gqlgen/graphql.Uint64
+  Any:
+    model:
+      - github.com/99designs/gqlgen/graphql.Any
   Post:
     fields:
       user:

@@ -197,6 +197,7 @@ type ComplexityRoot struct {
 	}
 
 	Subscription struct {
+		Notify         func(childComplexity int) int
 		Position       func(childComplexity int, symbol *string) int
 		SpotOrderEvent func(childComplexity int, orderID string) int
 		Trade          func(childComplexity int, symbol *string) int
@@ -268,6 +269,7 @@ type SubscriptionResolver interface {
 	Position(ctx context.Context, symbol *string) (<-chan *model.PositionStream, error)
 	Trade(ctx context.Context, symbol *string) (<-chan *model.TradeStream, error)
 	SpotOrderEvent(ctx context.Context, orderID string) (<-chan *model.SpotOrderEvent, error)
+	Notify(ctx context.Context) (<-chan interface{}, error)
 }
 
 type executableSchema struct {
@@ -989,6 +991,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.SpotPositionClosed.UserID(childComplexity), true
 
+	case "Subscription.notify":
+		if e.complexity.Subscription.Notify == nil {
+			break
+		}
+
+		return e.complexity.Subscription.Notify(childComplexity), true
+
 	case "Subscription.position":
 		if e.complexity.Subscription.Position == nil {
 			break
@@ -1502,6 +1511,7 @@ type DepthData {
 #
 # https://gqlgen.com/getting-started/
 scalar Int64
+scalar Any
 
 type Query {
   user: User!
@@ -1523,6 +1533,7 @@ type Subscription {
   position(symbol: String): PositionStream!
   trade(symbol: String): TradeStream!
   spotOrderEvent(order_id: String!): SpotOrderEvent!
+  notify: Any!
 }
 
 type WalletStream {
@@ -6739,6 +6750,64 @@ func (ec *executionContext) fieldContext_Subscription_spotOrderEvent(ctx context
 	return fc, nil
 }
 
+func (ec *executionContext) _Subscription_notify(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
+	fc, err := ec.fieldContext_Subscription_notify(ctx, field)
+	if err != nil {
+		return nil
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = nil
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Subscription().Notify(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return nil
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return nil
+	}
+	return func(ctx context.Context) graphql.Marshaler {
+		select {
+		case res, ok := <-resTmp.(<-chan interface{}):
+			if !ok {
+				return nil
+			}
+			return graphql.WriterFunc(func(w io.Writer) {
+				w.Write([]byte{'{'})
+				graphql.MarshalString(field.Alias).MarshalGQL(w)
+				w.Write([]byte{':'})
+				ec.marshalNAny2interface(ctx, field.Selections, res).MarshalGQL(w)
+				w.Write([]byte{'}'})
+			})
+		case <-ctx.Done():
+			return nil
+		}
+	}
+}
+
+func (ec *executionContext) fieldContext_Subscription_notify(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Subscription",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Any does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _TradeStream_agg_trade(ctx context.Context, field graphql.CollectedField, obj *model.TradeStream) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_TradeStream_agg_trade(ctx, field)
 	if err != nil {
@@ -10821,6 +10890,8 @@ func (ec *executionContext) _Subscription(ctx context.Context, sel ast.Selection
 		return ec._Subscription_trade(ctx, fields[0])
 	case "spotOrderEvent":
 		return ec._Subscription_spotOrderEvent(ctx, fields[0])
+	case "notify":
+		return ec._Subscription_notify(ctx, fields[0])
 	default:
 		panic("unknown field " + strconv.Quote(fields[0].Name))
 	}
@@ -11442,6 +11513,27 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 // endregion **************************** object.gotpl ****************************
 
 // region    ***************************** type.gotpl *****************************
+
+func (ec *executionContext) unmarshalNAny2interface(ctx context.Context, v interface{}) (interface{}, error) {
+	res, err := graphql.UnmarshalAny(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNAny2interface(ctx context.Context, sel ast.SelectionSet, v interface{}) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	res := graphql.MarshalAny(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
 
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
