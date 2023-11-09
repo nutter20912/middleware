@@ -34,8 +34,8 @@ type WalletStream {
 
 type PositionStream {
   open: [SpotPosition]!
-  closed: [SpotPositionClosed]!
 }
+
 # TODO 改成 Interface or Union
 type TradeStream {
   agg_trade: AggTradeData
