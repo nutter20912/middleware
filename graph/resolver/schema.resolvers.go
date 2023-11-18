@@ -214,8 +214,14 @@ func (r *queryResolver) DepositOrder(ctx context.Context, id string) (*model.Dep
 }
 
 // SpotPositions is the resolver for the spotPositions field.
-func (r *queryResolver) SpotPositions(ctx context.Context) ([]*model.SpotPosition, error) {
-	rsp, err := grpc.NewOrderServiceClient().GetSpotPosition(ctx, &orderV1.GetSpotPositionRequest{})
+func (r *queryResolver) SpotPositions(ctx context.Context, page *int64, limit *int64, symbol *string) (*model.SpotPositions, error) {
+	req := &orderV1.GetSpotPositionRequest{
+		Page:   page,
+		Limit:  limit,
+		Symbol: *symbol,
+	}
+
+	rsp, err := grpc.NewOrderServiceClient().GetSpotPosition(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -239,12 +245,26 @@ func (r *queryResolver) SpotPositions(ctx context.Context) ([]*model.SpotPositio
 		})
 	}
 
-	return data, nil
+	var paginator *model.PagePaginator
+	bytes, _ := json.Marshal(rsp.Paginator)
+	json.Unmarshal(bytes, &paginator)
+
+	spotPositions := &model.SpotPositions{
+		Data:      data,
+		Paginator: paginator}
+
+	return spotPositions, nil
 }
 
 // SpotPositionClosed is the resolver for the spotPositionClosed field.
-func (r *queryResolver) SpotPositionClosed(ctx context.Context) ([]*model.SpotPositionClosed, error) {
-	rsp, err := grpc.NewOrderServiceClient().GetSpotPositionClosed(ctx, &orderV1.GetSpotPositionClosedRequest{})
+func (r *queryResolver) SpotPositionClosed(ctx context.Context, page *int64, limit *int64, symbol *string) (*model.SpotPositionCloseds, error) {
+	req := &orderV1.GetSpotPositionClosedRequest{
+		Page:   page,
+		Limit:  limit,
+		Symbol: *symbol,
+	}
+
+	rsp, err := grpc.NewOrderServiceClient().GetSpotPositionClosed(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -271,7 +291,15 @@ func (r *queryResolver) SpotPositionClosed(ctx context.Context) ([]*model.SpotPo
 		})
 	}
 
-	return data, nil
+	var paginator *model.PagePaginator
+	bytes, _ := json.Marshal(rsp.Paginator)
+	json.Unmarshal(bytes, &paginator)
+
+	spotPositionCloseds := &model.SpotPositionCloseds{
+		Data:      data,
+		Paginator: paginator}
+
+	return spotPositionCloseds, nil
 }
 
 // Wallet is the resolver for the wallet field.

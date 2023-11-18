@@ -1,25 +1,10 @@
 scalar Uint64
 
-type Paginator {
-  next_cursor: String
-}
-type PagePaginator {
-  current_page: Int
-  last_page: Int
-  per_page: Int
-  total: Int
-}
-
 type User {
   id: ID!
   name: String!
   email: String!
   created_at: String!
-}
-
-type Posts {
-  data: [Post]!
-  paginator: Paginator
 }
 
 type Post {
@@ -29,11 +14,6 @@ type Post {
   user_id: ID!
 
   user: User!
-}
-
-type Comments {
-  data: [Comment]!
-  paginator: Paginator
 }
 
 type Comment {
@@ -68,10 +48,6 @@ type WalletEvent {
   memo: String!
 }
 
-type WalletEvents {
-  data: [WalletEvent]!
-  paginator: PagePaginator
-}
 
 enum DepositStatus {
   UNSPECIFIED

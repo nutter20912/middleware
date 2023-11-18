@@ -57,8 +57,7 @@ type Paginator struct {
 }
 
 type PositionStream struct {
-	Open   []*SpotPosition       `json:"open"`
-	Closed []*SpotPositionClosed `json:"closed"`
+	Open []*SpotPosition `json:"open"`
 }
 
 type Posts struct {
@@ -77,6 +76,16 @@ type SpotOrderEvent struct {
 	Status   OrderStatus `json:"status"`
 	Price    float64     `json:"price"`
 	Memo     string      `json:"memo"`
+}
+
+type SpotPositionCloseds struct {
+	Data      []*SpotPositionClosed `json:"data"`
+	Paginator *PagePaginator        `json:"paginator,omitempty"`
+}
+
+type SpotPositions struct {
+	Data      []*SpotPosition `json:"data"`
+	Paginator *PagePaginator  `json:"paginator,omitempty"`
 }
 
 type TradeStream struct {
