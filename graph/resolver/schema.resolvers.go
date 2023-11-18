@@ -311,7 +311,6 @@ func (r *subscriptionResolver) Wallet(ctx context.Context, eventCursor *string) 
 
 	stream, err := grpc.NewWalletServiceClient().GetWalletStream(ctx, &req)
 	if err != nil {
-		transport.AddSubscriptionError(ctx, gqlerror.Wrap(err))
 		return nil, err
 	}
 
@@ -360,11 +359,10 @@ func (r *subscriptionResolver) Wallet(ctx context.Context, eventCursor *string) 
 
 // Position is the resolver for the position field.
 func (r *subscriptionResolver) Position(ctx context.Context, symbol *string) (<-chan *model.PositionStream, error) {
-	req := orderV1.GetPositionStreamResquest{}
+	req := orderV1.GetPositionStreamResquest{Symbol: *symbol}
 
 	stream, err := grpc.NewOrderServiceClient().GetPositionStream(ctx, &req)
 	if err != nil {
-		transport.AddSubscriptionError(ctx, gqlerror.Wrap(err))
 		return nil, err
 	}
 
@@ -400,7 +398,6 @@ func (r *subscriptionResolver) Trade(ctx context.Context, symbol *string) (<-cha
 	req := marketV1.GetTradeStreamResquest{Symbol: symbol}
 	stream, err := grpc.NewMarketServiceClient().GetTradeStream(ctx, &req)
 	if err != nil {
-		transport.AddSubscriptionError(ctx, gqlerror.Wrap(err))
 		return nil, err
 	}
 
@@ -479,7 +476,6 @@ func (r *subscriptionResolver) SpotOrderEvent(ctx context.Context, orderID strin
 
 	stream, err := grpc.NewOrderServiceClient().GetSpotEventStream(ctx, &req)
 	if err != nil {
-		transport.AddSubscriptionError(ctx, gqlerror.Wrap(err))
 		return nil, err
 	}
 
@@ -518,7 +514,6 @@ func (r *subscriptionResolver) SpotOrderEvent(ctx context.Context, orderID strin
 func (r *subscriptionResolver) Notify(ctx context.Context) (<-chan interface{}, error) {
 	stream, err := grpc.NewNotifyServiceClient().GetStream(ctx, &emptypb.Empty{})
 	if err != nil {
-		transport.AddSubscriptionError(ctx, gqlerror.Wrap(err))
 		return nil, err
 	}
 
