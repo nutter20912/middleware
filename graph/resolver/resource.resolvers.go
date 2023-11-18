@@ -19,6 +19,7 @@ func (r *commentResolver) User(ctx context.Context, obj *model.Comment) (*model.
 	result, err := loaders.GetUser(ctx, obj.UserId)
 	if err != nil {
 		fmt.Println(err)
+		return nil, err
 	}
 
 	return result, nil
@@ -53,6 +54,7 @@ func (r *postResolver) User(ctx context.Context, obj *model.Post) (*model.User, 
 	result, err := loaders.GetUser(ctx, obj.UserId)
 	if err != nil {
 		fmt.Println(err)
+		return nil, err
 	}
 
 	return result, nil

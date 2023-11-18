@@ -27,8 +27,6 @@ func (r *queryResolver) User(ctx context.Context) (*model.User, error) {
 	rsp, err := grpc.NewUserServiceClient().Get(ctx, &emptypb.Empty{})
 	if err != nil {
 		return nil, err
-	} else {
-		fmt.Println(rsp)
 	}
 
 	rspString, _ := json.Marshal(rsp.Data)
@@ -52,8 +50,6 @@ func (r *queryResolver) Posts(ctx context.Context, cursor *string) (*model.Posts
 	rsp, err := grpc.NewPostServiceClient().GetAll(ctx, &req)
 	if err != nil {
 		return nil, err
-	} else {
-		fmt.Println(rsp)
 	}
 
 	rspString, _ := json.Marshal(rsp.Data)
@@ -78,8 +74,6 @@ func (r *queryResolver) Post(ctx context.Context, id string) (*model.Post, error
 	rsp, err := grpc.NewPostServiceClient().Get(ctx, &boardV1.PostServiceGetRequest{Id: id})
 	if err != nil {
 		return nil, err
-	} else {
-		fmt.Println(rsp)
 	}
 
 	rspString, _ := json.Marshal(rsp.Data)
@@ -103,8 +97,6 @@ func (r *queryResolver) Comments(ctx context.Context, postID string, cursor *str
 	rsp, err := grpc.NewCommentServiceClient().GetAll(ctx, &req)
 	if err != nil {
 		return nil, err
-	} else {
-		fmt.Println(rsp)
 	}
 
 	rspString, _ := json.Marshal(rsp.Data)
@@ -158,8 +150,6 @@ func (r *queryResolver) WalletEvents(ctx context.Context, page *int64, limit *in
 	rsp, err := grpc.NewWalletServiceClient().GetEvent(ctx, &req)
 	if err != nil {
 		return nil, err
-	} else {
-		fmt.Println(rsp)
 	}
 
 	var events []*model.WalletEvent
@@ -195,8 +185,6 @@ func (r *queryResolver) DepositOrder(ctx context.Context, id string) (*model.Dep
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Println(orderRsp.Data.CreatedAt)
 
 	order := &model.DepositOrder{
 		ID:        orderRsp.Data.Id,
