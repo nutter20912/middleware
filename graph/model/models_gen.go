@@ -46,10 +46,10 @@ type KlineData struct {
 }
 
 type PagePaginator struct {
-	CurrentPage *int `json:"current_page,omitempty"`
-	LastPage    *int `json:"last_page,omitempty"`
-	PerPage     *int `json:"per_page,omitempty"`
-	Total       *int `json:"total,omitempty"`
+	CurrentPage int `json:"current_page"`
+	LastPage    int `json:"last_page"`
+	PerPage     int `json:"per_page"`
+	Total       int `json:"total"`
 }
 
 type Paginator struct {

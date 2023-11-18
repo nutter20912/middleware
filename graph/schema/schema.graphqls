@@ -47,10 +47,10 @@ type Paginator {
   next_cursor: String
 }
 type PagePaginator {
-  current_page: Int
-  last_page: Int
-  per_page: Int
-  total: Int
+  current_page: Int!
+  last_page: Int!
+  per_page: Int!
+  total: Int!
 }
 
 type Posts {
