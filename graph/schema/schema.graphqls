@@ -11,7 +11,7 @@ type Query {
   comments(post_id: String!, cursor: String): Comments
 
   wallet: Wallet
-  walletEvents(page: Int64, limit: Int64): WalletEvents
+  walletEvents(page: Int64, limit: Int64,  filter: WalletEventFilter): WalletEvents
 
   depositOrder(id: String!): DepositOrder!
 
@@ -25,6 +25,11 @@ type Subscription {
   trade(symbol: String): TradeStream!
   spotOrderEvent(order_id: String!): SpotOrderEvent!
   notify: Any!
+}
+
+input WalletEventFilter {
+  start_date: String!
+  end_date: String!
 }
 
 type WalletStream {

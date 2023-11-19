@@ -150,7 +150,7 @@ type ComplexityRoot struct {
 		SpotPositions      func(childComplexity int, page *int64, limit *int64, symbol *string) int
 		User               func(childComplexity int) int
 		Wallet             func(childComplexity int) int
-		WalletEvents       func(childComplexity int, page *int64, limit *int64) int
+		WalletEvents       func(childComplexity int, page *int64, limit *int64, filter *model.WalletEventFilter) int
 	}
 
 	SpotOrderEvent struct {
@@ -268,7 +268,7 @@ type QueryResolver interface {
 	Post(ctx context.Context, id string) (*model.Post, error)
 	Comments(ctx context.Context, postID string, cursor *string) (*model.Comments, error)
 	Wallet(ctx context.Context) (*model.Wallet, error)
-	WalletEvents(ctx context.Context, page *int64, limit *int64) (*model.WalletEvents, error)
+	WalletEvents(ctx context.Context, page *int64, limit *int64, filter *model.WalletEventFilter) (*model.WalletEvents, error)
 	DepositOrder(ctx context.Context, id string) (*model.DepositOrder, error)
 	SpotPositions(ctx context.Context, page *int64, limit *int64, symbol *string) (*model.SpotPositions, error)
 	SpotPositionClosed(ctx context.Context, page *int64, limit *int64, symbol *string) (*model.SpotPositionCloseds, error)
@@ -770,7 +770,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.WalletEvents(childComplexity, args["page"].(*int64), args["limit"].(*int64)), true
+		return e.complexity.Query.WalletEvents(childComplexity, args["page"].(*int64), args["limit"].(*int64), args["filter"].(*model.WalletEventFilter)), true
 
 	case "SpotOrderEvent.memo":
 		if e.complexity.SpotOrderEvent.Memo == nil {
@@ -1240,7 +1240,9 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	rc := graphql.GetOperationContext(ctx)
 	ec := executionContext{rc, e, 0, 0, make(chan graphql.DeferredResult)}
-	inputUnmarshalMap := graphql.BuildUnmarshalerMap()
+	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
+		ec.unmarshalInputWalletEventFilter,
+	)
 	first := true
 
 	switch rc.Operation.Operation {
@@ -1536,7 +1538,7 @@ type Query {
   comments(post_id: String!, cursor: String): Comments
 
   wallet: Wallet
-  walletEvents(page: Int64, limit: Int64): WalletEvents
+  walletEvents(page: Int64, limit: Int64,  filter: WalletEventFilter): WalletEvents
 
   depositOrder(id: String!): DepositOrder!
 
@@ -1550,6 +1552,11 @@ type Subscription {
   trade(symbol: String): TradeStream!
   spotOrderEvent(order_id: String!): SpotOrderEvent!
   notify: Any!
+}
+
+input WalletEventFilter {
+  start_date: String!
+  end_date: String!
 }
 
 type WalletStream {
@@ -1780,6 +1787,15 @@ func (ec *executionContext) field_Query_walletEvents_args(ctx context.Context, r
 		}
 	}
 	args["limit"] = arg1
+	var arg2 *model.WalletEventFilter
+	if tmp, ok := rawArgs["filter"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
+		arg2, err = ec.unmarshalOWalletEventFilter2ᚖmiddlewareᚋgraphᚋmodelᚐWalletEventFilter(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["filter"] = arg2
 	return args, nil
 }
 
@@ -4654,7 +4670,7 @@ func (ec *executionContext) _Query_walletEvents(ctx context.Context, field graph
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().WalletEvents(rctx, fc.Args["page"].(*int64), fc.Args["limit"].(*int64))
+		return ec.resolvers.Query().WalletEvents(rctx, fc.Args["page"].(*int64), fc.Args["limit"].(*int64), fc.Args["filter"].(*model.WalletEventFilter))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9843,6 +9859,44 @@ func (ec *executionContext) fieldContext___Type_specifiedByURL(ctx context.Conte
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputWalletEventFilter(ctx context.Context, obj interface{}) (model.WalletEventFilter, error) {
+	var it model.WalletEventFilter
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"start_date", "end_date"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "start_date":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("start_date"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StartDate = data
+		case "end_date":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("end_date"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.EndDate = data
+		}
+	}
+
+	return it, nil
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -12894,6 +12948,14 @@ func (ec *executionContext) marshalOWalletEvent2ᚖmiddlewareᚋgraphᚋmodelᚐ
 		return graphql.Null
 	}
 	return ec._WalletEvent(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOWalletEventFilter2ᚖmiddlewareᚋgraphᚋmodelᚐWalletEventFilter(ctx context.Context, v interface{}) (*model.WalletEventFilter, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputWalletEventFilter(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalOWalletEvents2ᚖmiddlewareᚋgraphᚋmodelᚐWalletEvents(ctx context.Context, sel ast.SelectionSet, v *model.WalletEvents) graphql.Marshaler {

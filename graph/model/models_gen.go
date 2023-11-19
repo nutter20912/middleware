@@ -117,6 +117,11 @@ type WalletEvent struct {
 	Memo    string          `json:"memo"`
 }
 
+type WalletEventFilter struct {
+	StartDate string `json:"start_date"`
+	EndDate   string `json:"end_date"`
+}
+
 type WalletEvents struct {
 	Data      []*WalletEvent `json:"data"`
 	Paginator *PagePaginator `json:"paginator,omitempty"`

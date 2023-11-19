@@ -136,8 +136,11 @@ func (r *queryResolver) Wallet(ctx context.Context) (*model.Wallet, error) {
 }
 
 // WalletEvents is the resolver for the walletEvents field.
-func (r *queryResolver) WalletEvents(ctx context.Context, page *int64, limit *int64) (*model.WalletEvents, error) {
-	req := walletV1.GetEventRequest{}
+func (r *queryResolver) WalletEvents(ctx context.Context, page *int64, limit *int64, filter *model.WalletEventFilter) (*model.WalletEvents, error) {
+	req := walletV1.GetEventRequest{
+		StartDate: filter.StartDate,
+		EndDate:   filter.EndDate,
+	}
 
 	if page != nil {
 		req.Page = page
