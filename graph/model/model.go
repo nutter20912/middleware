@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	orderV1 "middleware/proto/order/v1"
+	walletV1 "middleware/proto/wallet/v1"
 	"strings"
 )
 
@@ -172,6 +173,24 @@ func (e *OrderStatus) UnmarshalJSON(v []byte) error {
 
 	if !e.IsValid() {
 		return fmt.Errorf("%s is not a valid OrderType", string(v))
+	}
+
+	return nil
+}
+
+func (e *WalletEventType) UnmarshalJSON(v []byte) error {
+	var temp walletV1.WalletEventType
+	json.Unmarshal(v, &temp)
+
+	if temp != walletV1.WalletEventType_WALLET_EVENT_TYPE_UNSPECIFIED {
+		*e = WalletEventType(strings.TrimPrefix(temp.String(), "WALLET_EVENT_TYPE_"))
+	} else {
+		str := string(v)
+		*e = WalletEventType(str)
+	}
+
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid WalletEventType", string(v))
 	}
 
 	return nil

@@ -15,6 +15,8 @@ type Query {
 
   depositOrder(id: String!): DepositOrder!
 
+  spotOrderEvents(page: Int64, limit: Int64,  filter: SpotOrderEventFilter): SpotOrderEvents
+
   spotPositions(page: Int64, limit: Int64, symbol: String): SpotPositions
   spotPositionClosed(page: Int64, limit: Int64, symbol: String): SpotPositionCloseds
 }
@@ -24,60 +26,4 @@ type Subscription {
   position(symbol: String): PositionStream!
   trade(symbol: String): TradeStream!
   notify: Any!
-}
-
-input WalletEventFilter {
-  start_date: String!
-  end_date: String!
-}
-
-type WalletStream {
-  info: Wallet
-  events: [WalletEvent]
-}
-
-type PositionStream {
-  open: [SpotPosition]!
-}
-
-# TODO 改成 Interface or Union
-type TradeStream {
-  agg_trade: AggTradeData
-  kline: KlineData
-  depth: DepthData
-}
-
-type Paginator {
-  next_cursor: String
-}
-type PagePaginator {
-  current_page: Int!
-  last_page: Int!
-  per_page: Int!
-  total: Int!
-}
-
-type Posts {
-  data: [Post]!
-  paginator: Paginator
-}
-
-type Comments {
-  data: [Comment]!
-  paginator: Paginator
-}
-
-type WalletEvents {
-  data: [WalletEvent]!
-  paginator: PagePaginator
-}
-
-type SpotPositions {
-  data: [SpotPosition]!
-  paginator: PagePaginator
-}
-
-type SpotPositionCloseds {
-  data: [SpotPositionClosed]!
-  paginator: PagePaginator
 }

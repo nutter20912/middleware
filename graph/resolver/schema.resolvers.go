@@ -155,19 +155,8 @@ func (r *queryResolver) WalletEvents(ctx context.Context, page *int64, limit *in
 	}
 
 	var events []*model.WalletEvent
-	for _, item := range rsp.Data {
-		events = append(events, &model.WalletEvent{
-			ID:      item.Id,
-			UserID:  item.UserId,
-			OrderID: item.OrderId,
-			Time:    item.Time,
-			Change:  item.Change,
-			Memo:    item.Memo,
-			Type: model.WalletEventType(
-				strings.TrimPrefix(item.Type.String(), "WALLET_EVENT_TYPE_"),
-			),
-		})
-	}
+	dataBytes, _ := json.Marshal(rsp.Data)
+	json.Unmarshal(dataBytes, &events)
 
 	var paginator *model.PagePaginator
 	bytes, _ := json.Marshal(rsp.Paginator)
@@ -201,6 +190,42 @@ func (r *queryResolver) DepositOrder(ctx context.Context, id string) (*model.Dep
 	}
 
 	return order, nil
+}
+
+// SpotOrderEvents is the resolver for the spotOrderEvents field.
+func (r *queryResolver) SpotOrderEvents(ctx context.Context, page *int64, limit *int64, filter *model.SpotOrderEventFilter) (*model.SpotOrderEvents, error) {
+	req := orderV1.GetSpotEventRequest{
+		StartDate: filter.StartDate,
+		EndDate:   filter.EndDate,
+	}
+
+	if page != nil {
+		req.Page = page
+	}
+
+	if page != nil {
+		req.Limit = limit
+	}
+
+	rsp, err := grpc.NewOrderServiceClient().GetSpotEvent(ctx, &req)
+	if err != nil {
+		return nil, err
+	}
+
+	var data []*model.SpotOrderEvent
+	dataBytes, _ := json.Marshal(rsp.Data)
+	json.Unmarshal(dataBytes, &data)
+
+	var paginator *model.PagePaginator
+	bytes, _ := json.Marshal(rsp.Paginator)
+	json.Unmarshal(bytes, &paginator)
+
+	response := model.SpotOrderEvents{
+		Data:      data,
+		Paginator: paginator,
+	}
+
+	return &response, nil
 }
 
 // SpotPositions is the resolver for the spotPositions field.

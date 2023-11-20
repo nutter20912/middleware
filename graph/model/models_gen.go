@@ -78,6 +78,16 @@ type SpotOrderEvent struct {
 	Memo     string      `json:"memo"`
 }
 
+type SpotOrderEventFilter struct {
+	StartDate string `json:"start_date"`
+	EndDate   string `json:"end_date"`
+}
+
+type SpotOrderEvents struct {
+	Data      []*SpotOrderEvent `json:"data"`
+	Paginator *PagePaginator    `json:"paginator,omitempty"`
+}
+
 type SpotPositionCloseds struct {
 	Data      []*SpotPositionClosed `json:"data"`
 	Paginator *PagePaginator        `json:"paginator,omitempty"`

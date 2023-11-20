@@ -1,0 +1,10 @@
+
+input WalletEventFilter {
+  start_date: String!
+  end_date: String!
+}
+
+input SpotOrderEventFilter {
+  start_date: String!
+  end_date: String!
+}
