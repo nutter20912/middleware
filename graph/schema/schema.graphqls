@@ -23,7 +23,6 @@ type Subscription {
   wallet(event_cursor: String): WalletStream!
   position(symbol: String): PositionStream!
   trade(symbol: String): TradeStream!
-  spotOrderEvent(order_id: String!): SpotOrderEvent!
   notify: Any!
 }
 
