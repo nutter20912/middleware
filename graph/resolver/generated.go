@@ -148,8 +148,8 @@ type ComplexityRoot struct {
 		Posts              func(childComplexity int, cursor *string) int
 		SpotOrderEvents    func(childComplexity int, orderID string) int
 		SpotOrders         func(childComplexity int, page *int64, limit *int64, filter *model.SpotOrderFilter) int
-		SpotPositionClosed func(childComplexity int, page *int64, limit *int64, symbol *string) int
-		SpotPositions      func(childComplexity int, page *int64, limit *int64, symbol *string) int
+		SpotPositionClosed func(childComplexity int, page *int64, limit *int64, symbol string) int
+		SpotPositions      func(childComplexity int, page *int64, limit *int64, symbol string) int
 		User               func(childComplexity int) int
 		Wallet             func(childComplexity int) int
 		WalletEvents       func(childComplexity int, page *int64, limit *int64, filter *model.WalletEventFilter) int
@@ -292,8 +292,8 @@ type QueryResolver interface {
 	DepositOrder(ctx context.Context, id string) (*model.DepositOrder, error)
 	SpotOrders(ctx context.Context, page *int64, limit *int64, filter *model.SpotOrderFilter) (*model.SpotOrders, error)
 	SpotOrderEvents(ctx context.Context, orderID string) ([]*model.SpotOrderEvent, error)
-	SpotPositions(ctx context.Context, page *int64, limit *int64, symbol *string) (*model.SpotPositions, error)
-	SpotPositionClosed(ctx context.Context, page *int64, limit *int64, symbol *string) (*model.SpotPositionCloseds, error)
+	SpotPositions(ctx context.Context, page *int64, limit *int64, symbol string) (*model.SpotPositions, error)
+	SpotPositionClosed(ctx context.Context, page *int64, limit *int64, symbol string) (*model.SpotPositionCloseds, error)
 }
 type SubscriptionResolver interface {
 	Wallet(ctx context.Context, eventCursor *string) (<-chan *model.WalletStream, error)
@@ -777,7 +777,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.SpotPositionClosed(childComplexity, args["page"].(*int64), args["limit"].(*int64), args["symbol"].(*string)), true
+		return e.complexity.Query.SpotPositionClosed(childComplexity, args["page"].(*int64), args["limit"].(*int64), args["symbol"].(string)), true
 
 	case "Query.spotPositions":
 		if e.complexity.Query.SpotPositions == nil {
@@ -789,7 +789,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.SpotPositions(childComplexity, args["page"].(*int64), args["limit"].(*int64), args["symbol"].(*string)), true
+		return e.complexity.Query.SpotPositions(childComplexity, args["page"].(*int64), args["limit"].(*int64), args["symbol"].(string)), true
 
 	case "Query.user":
 		if e.complexity.Query.User == nil {
@@ -1611,7 +1611,7 @@ type SpotPosition {
   id: ID!
   user_id: ID!
   created_at: String!
-  updated_at: String!
+  updated_at: String
 
   symbol: String!
   side: OrderSide!
@@ -1751,8 +1751,8 @@ type Query {
   spotOrders(page: Int64, limit: Int64,  filter: SpotOrderFilter): SpotOrders
   spotOrderEvents(order_id: String!): [SpotOrderEvent]!
 
-  spotPositions(page: Int64, limit: Int64, symbol: String): SpotPositions
-  spotPositionClosed(page: Int64, limit: Int64, symbol: String): SpotPositionCloseds
+  spotPositions(page: Int64, limit: Int64, symbol: String!): SpotPositions
+  spotPositionClosed(page: Int64, limit: Int64, symbol: String!): SpotPositionCloseds
 }
 
 type Subscription {
@@ -1922,10 +1922,10 @@ func (ec *executionContext) field_Query_spotPositionClosed_args(ctx context.Cont
 		}
 	}
 	args["limit"] = arg1
-	var arg2 *string
+	var arg2 string
 	if tmp, ok := rawArgs["symbol"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("symbol"))
-		arg2, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		arg2, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1955,10 +1955,10 @@ func (ec *executionContext) field_Query_spotPositions_args(ctx context.Context, 
 		}
 	}
 	args["limit"] = arg1
-	var arg2 *string
+	var arg2 string
 	if tmp, ok := rawArgs["symbol"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("symbol"))
-		arg2, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		arg2, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -5122,7 +5122,7 @@ func (ec *executionContext) _Query_spotPositions(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().SpotPositions(rctx, fc.Args["page"].(*int64), fc.Args["limit"].(*int64), fc.Args["symbol"].(*string))
+		return ec.resolvers.Query().SpotPositions(rctx, fc.Args["page"].(*int64), fc.Args["limit"].(*int64), fc.Args["symbol"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5180,7 +5180,7 @@ func (ec *executionContext) _Query_spotPositionClosed(ctx context.Context, field
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().SpotPositionClosed(rctx, fc.Args["page"].(*int64), fc.Args["limit"].(*int64), fc.Args["symbol"].(*string))
+		return ec.resolvers.Query().SpotPositionClosed(rctx, fc.Args["page"].(*int64), fc.Args["limit"].(*int64), fc.Args["symbol"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6549,14 +6549,11 @@ func (ec *executionContext) _SpotPosition_updated_at(ctx context.Context, field 
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SpotPosition_updated_at(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -12085,9 +12082,6 @@ func (ec *executionContext) _SpotPosition(ctx context.Context, sel ast.Selection
 			}
 		case "updated_at":
 			out.Values[i] = ec._SpotPosition_updated_at(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "symbol":
 			out.Values[i] = ec._SpotPosition_symbol(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -13970,6 +13964,16 @@ func (ec *executionContext) marshalOSpotPositions2ᚖmiddlewareᚋgraphᚋmodel�
 		return graphql.Null
 	}
 	return ec._SpotPositions(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOString2string(ctx context.Context, v interface{}) (string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOString2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
+	res := graphql.MarshalString(v)
+	return res
 }
 
 func (ec *executionContext) unmarshalOString2ᚕstringᚄ(ctx context.Context, v interface{}) ([]string, error) {

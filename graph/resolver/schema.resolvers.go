@@ -243,11 +243,14 @@ func (r *queryResolver) SpotOrderEvents(ctx context.Context, orderID string) ([]
 }
 
 // SpotPositions is the resolver for the spotPositions field.
-func (r *queryResolver) SpotPositions(ctx context.Context, page *int64, limit *int64, symbol *string) (*model.SpotPositions, error) {
-	req := &orderV1.GetSpotPositionRequest{
-		Page:   page,
-		Limit:  limit,
-		Symbol: *symbol,
+func (r *queryResolver) SpotPositions(ctx context.Context, page *int64, limit *int64, symbol string) (*model.SpotPositions, error) {
+	req := &orderV1.GetSpotPositionRequest{Symbol: symbol}
+	if page != nil {
+		req.Page = page
+	}
+
+	if limit != nil {
+		req.Limit = limit
 	}
 
 	rsp, err := grpc.NewOrderServiceClient().GetSpotPosition(ctx, req)
@@ -256,41 +259,32 @@ func (r *queryResolver) SpotPositions(ctx context.Context, page *int64, limit *i
 	}
 
 	var data []*model.SpotPosition
-	for _, item := range rsp.Data {
-		data = append(data, &model.SpotPosition{
-			ID:           item.Id,
-			UserID:       item.UserId,
-			CreatedAt:    item.CreatedAt,
-			UpdatedAt:    item.UpdatedAt,
-			Symbol:       item.Symbol,
-			Quantity:     item.Quantity,
-			OrderID:      item.OrderId,
-			Price:        item.Price,
-			Fee:          item.Fee,
-			OpenQuantity: item.OpenQuantity,
-			Side: model.OrderSide(
-				strings.TrimPrefix(item.Side.String(), "ORDER_SIDE_"),
-			),
-		})
-	}
+	dataBytes, _ := json.Marshal(rsp.Data)
+	json.Unmarshal(dataBytes, &data)
 
+	fmt.Println(string(dataBytes))
 	var paginator *model.PagePaginator
 	bytes, _ := json.Marshal(rsp.Paginator)
 	json.Unmarshal(bytes, &paginator)
 
-	spotPositions := &model.SpotPositions{
+	response := model.SpotPositions{
 		Data:      data,
-		Paginator: paginator}
+		Paginator: paginator,
+	}
 
-	return spotPositions, nil
+	return &response, nil
 }
 
 // SpotPositionClosed is the resolver for the spotPositionClosed field.
-func (r *queryResolver) SpotPositionClosed(ctx context.Context, page *int64, limit *int64, symbol *string) (*model.SpotPositionCloseds, error) {
-	req := &orderV1.GetSpotPositionClosedRequest{
-		Page:   page,
-		Limit:  limit,
-		Symbol: *symbol,
+func (r *queryResolver) SpotPositionClosed(ctx context.Context, page *int64, limit *int64, symbol string) (*model.SpotPositionCloseds, error) {
+	req := &orderV1.GetSpotPositionClosedRequest{Symbol: symbol}
+
+	if page != nil {
+		req.Page = page
+	}
+
+	if limit != nil {
+		req.Limit = limit
 	}
 
 	rsp, err := grpc.NewOrderServiceClient().GetSpotPositionClosed(ctx, req)

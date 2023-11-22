@@ -132,7 +132,7 @@ type SpotPosition {
   id: ID!
   user_id: ID!
   created_at: String!
-  updated_at: String!
+  updated_at: String
 
   symbol: String!
   side: OrderSide!

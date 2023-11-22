@@ -79,7 +79,7 @@ type SpotPosition struct {
 	ID           string    `json:"id"`
 	UserID       string    `json:"user_id"`
 	CreatedAt    string    `json:"created_at"`
-	UpdatedAt    string    `json:"updated_at"`
+	UpdatedAt    string    `json:"updated_at,omitempty"`
 	Symbol       string    `json:"symbol"`
 	Side         OrderSide `json:"side"`
 	Quantity     float64   `json:"quantity"`
@@ -99,7 +99,9 @@ func (s *SpotPosition) UnmarshalJSON(data []byte) error {
 	s.ID = temp.Id
 	s.UserID = temp.UserId
 	s.CreatedAt = temp.CreatedAt
-	s.UpdatedAt = temp.UpdatedAt
+	if temp.UpdatedAt != nil {
+		s.UpdatedAt = *temp.UpdatedAt
+	}
 	s.Symbol = temp.Symbol
 	s.Quantity = temp.Quantity
 	s.OrderID = temp.OrderId
