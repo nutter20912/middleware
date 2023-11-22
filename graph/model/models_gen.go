@@ -65,6 +65,20 @@ type Posts struct {
 	Paginator *Paginator `json:"paginator,omitempty"`
 }
 
+type SpotOrder struct {
+	ID        string      `json:"id"`
+	UserID    string      `json:"user_id"`
+	CreatedAt string      `json:"created_at"`
+	UpdatedAt string      `json:"updated_at"`
+	Symbol    string      `json:"symbol"`
+	Price     float64     `json:"price"`
+	Quantity  float64     `json:"quantity"`
+	Side      OrderSide   `json:"side"`
+	Type      OrderType   `json:"type"`
+	Status    OrderStatus `json:"status"`
+	Memo      string      `json:"memo"`
+}
+
 type SpotOrderEvent struct {
 	UserID   string      `json:"user_id"`
 	OrderID  string      `json:"order_id"`
@@ -78,14 +92,14 @@ type SpotOrderEvent struct {
 	Memo     string      `json:"memo"`
 }
 
-type SpotOrderEventFilter struct {
+type SpotOrderFilter struct {
 	StartDate string `json:"start_date"`
 	EndDate   string `json:"end_date"`
 }
 
-type SpotOrderEvents struct {
-	Data      []*SpotOrderEvent `json:"data"`
-	Paginator *PagePaginator    `json:"paginator,omitempty"`
+type SpotOrders struct {
+	Data      []*SpotOrder   `json:"data"`
+	Paginator *PagePaginator `json:"paginator,omitempty"`
 }
 
 type SpotPositionCloseds struct {

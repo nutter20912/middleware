@@ -23,8 +23,8 @@ type WalletEvents {
   paginator: PagePaginator
 }
 
-type SpotOrderEvents {
-  data: [SpotOrderEvent]!
+type SpotOrders {
+  data: [SpotOrder]!
   paginator: PagePaginator
 }
 

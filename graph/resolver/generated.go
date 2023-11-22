@@ -146,12 +146,27 @@ type ComplexityRoot struct {
 		DepositOrder       func(childComplexity int, id string) int
 		Post               func(childComplexity int, id string) int
 		Posts              func(childComplexity int, cursor *string) int
-		SpotOrderEvents    func(childComplexity int, page *int64, limit *int64, filter *model.SpotOrderEventFilter) int
+		SpotOrderEvents    func(childComplexity int, orderID string) int
+		SpotOrders         func(childComplexity int, page *int64, limit *int64, filter *model.SpotOrderFilter) int
 		SpotPositionClosed func(childComplexity int, page *int64, limit *int64, symbol *string) int
 		SpotPositions      func(childComplexity int, page *int64, limit *int64, symbol *string) int
 		User               func(childComplexity int) int
 		Wallet             func(childComplexity int) int
 		WalletEvents       func(childComplexity int, page *int64, limit *int64, filter *model.WalletEventFilter) int
+	}
+
+	SpotOrder struct {
+		CreatedAt func(childComplexity int) int
+		ID        func(childComplexity int) int
+		Memo      func(childComplexity int) int
+		Price     func(childComplexity int) int
+		Quantity  func(childComplexity int) int
+		Side      func(childComplexity int) int
+		Status    func(childComplexity int) int
+		Symbol    func(childComplexity int) int
+		Type      func(childComplexity int) int
+		UpdatedAt func(childComplexity int) int
+		UserID    func(childComplexity int) int
 	}
 
 	SpotOrderEvent struct {
@@ -167,7 +182,7 @@ type ComplexityRoot struct {
 		UserID   func(childComplexity int) int
 	}
 
-	SpotOrderEvents struct {
+	SpotOrders struct {
 		Data      func(childComplexity int) int
 		Paginator func(childComplexity int) int
 	}
@@ -275,7 +290,8 @@ type QueryResolver interface {
 	Wallet(ctx context.Context) (*model.Wallet, error)
 	WalletEvents(ctx context.Context, page *int64, limit *int64, filter *model.WalletEventFilter) (*model.WalletEvents, error)
 	DepositOrder(ctx context.Context, id string) (*model.DepositOrder, error)
-	SpotOrderEvents(ctx context.Context, page *int64, limit *int64, filter *model.SpotOrderEventFilter) (*model.SpotOrderEvents, error)
+	SpotOrders(ctx context.Context, page *int64, limit *int64, filter *model.SpotOrderFilter) (*model.SpotOrders, error)
+	SpotOrderEvents(ctx context.Context, orderID string) ([]*model.SpotOrderEvent, error)
 	SpotPositions(ctx context.Context, page *int64, limit *int64, symbol *string) (*model.SpotPositions, error)
 	SpotPositionClosed(ctx context.Context, page *int64, limit *int64, symbol *string) (*model.SpotPositionCloseds, error)
 }
@@ -737,7 +753,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.SpotOrderEvents(childComplexity, args["page"].(*int64), args["limit"].(*int64), args["filter"].(*model.SpotOrderEventFilter)), true
+		return e.complexity.Query.SpotOrderEvents(childComplexity, args["order_id"].(string)), true
+
+	case "Query.spotOrders":
+		if e.complexity.Query.SpotOrders == nil {
+			break
+		}
+
+		args, err := ec.field_Query_spotOrders_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.SpotOrders(childComplexity, args["page"].(*int64), args["limit"].(*int64), args["filter"].(*model.SpotOrderFilter)), true
 
 	case "Query.spotPositionClosed":
 		if e.complexity.Query.SpotPositionClosed == nil {
@@ -788,6 +816,83 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.WalletEvents(childComplexity, args["page"].(*int64), args["limit"].(*int64), args["filter"].(*model.WalletEventFilter)), true
+
+	case "SpotOrder.created_at":
+		if e.complexity.SpotOrder.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.SpotOrder.CreatedAt(childComplexity), true
+
+	case "SpotOrder.id":
+		if e.complexity.SpotOrder.ID == nil {
+			break
+		}
+
+		return e.complexity.SpotOrder.ID(childComplexity), true
+
+	case "SpotOrder.memo":
+		if e.complexity.SpotOrder.Memo == nil {
+			break
+		}
+
+		return e.complexity.SpotOrder.Memo(childComplexity), true
+
+	case "SpotOrder.price":
+		if e.complexity.SpotOrder.Price == nil {
+			break
+		}
+
+		return e.complexity.SpotOrder.Price(childComplexity), true
+
+	case "SpotOrder.quantity":
+		if e.complexity.SpotOrder.Quantity == nil {
+			break
+		}
+
+		return e.complexity.SpotOrder.Quantity(childComplexity), true
+
+	case "SpotOrder.side":
+		if e.complexity.SpotOrder.Side == nil {
+			break
+		}
+
+		return e.complexity.SpotOrder.Side(childComplexity), true
+
+	case "SpotOrder.status":
+		if e.complexity.SpotOrder.Status == nil {
+			break
+		}
+
+		return e.complexity.SpotOrder.Status(childComplexity), true
+
+	case "SpotOrder.symbol":
+		if e.complexity.SpotOrder.Symbol == nil {
+			break
+		}
+
+		return e.complexity.SpotOrder.Symbol(childComplexity), true
+
+	case "SpotOrder.type":
+		if e.complexity.SpotOrder.Type == nil {
+			break
+		}
+
+		return e.complexity.SpotOrder.Type(childComplexity), true
+
+	case "SpotOrder.updated_at":
+		if e.complexity.SpotOrder.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.SpotOrder.UpdatedAt(childComplexity), true
+
+	case "SpotOrder.user_id":
+		if e.complexity.SpotOrder.UserID == nil {
+			break
+		}
+
+		return e.complexity.SpotOrder.UserID(childComplexity), true
 
 	case "SpotOrderEvent.memo":
 		if e.complexity.SpotOrderEvent.Memo == nil {
@@ -859,19 +964,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.SpotOrderEvent.UserID(childComplexity), true
 
-	case "SpotOrderEvents.data":
-		if e.complexity.SpotOrderEvents.Data == nil {
+	case "SpotOrders.data":
+		if e.complexity.SpotOrders.Data == nil {
 			break
 		}
 
-		return e.complexity.SpotOrderEvents.Data(childComplexity), true
+		return e.complexity.SpotOrders.Data(childComplexity), true
 
-	case "SpotOrderEvents.paginator":
-		if e.complexity.SpotOrderEvents.Paginator == nil {
+	case "SpotOrders.paginator":
+		if e.complexity.SpotOrders.Paginator == nil {
 			break
 		}
 
-		return e.complexity.SpotOrderEvents.Paginator(childComplexity), true
+		return e.complexity.SpotOrders.Paginator(childComplexity), true
 
 	case "SpotPosition.created_at":
 		if e.complexity.SpotPosition.CreatedAt == nil {
@@ -1260,7 +1365,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	rc := graphql.GetOperationContext(ctx)
 	ec := executionContext{rc, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
-		ec.unmarshalInputSpotOrderEventFilter,
+		ec.unmarshalInputSpotOrderFilter,
 		ec.unmarshalInputWalletEventFilter,
 	)
 	first := true
@@ -1367,10 +1472,11 @@ input WalletEventFilter {
   end_date: String!
 }
 
-input SpotOrderEventFilter {
+input SpotOrderFilter {
   start_date: String!
   end_date: String!
-}`, BuiltIn: false},
+}
+`, BuiltIn: false},
 	{Name: "../schema/resource.graphqls", Input: `scalar Uint64
 
 type User {
@@ -1470,6 +1576,21 @@ enum OrderStatus {
   CANCELED
   FILLED
   REJECTED
+}
+
+type SpotOrder {
+  id: ID!
+  user_id: ID!
+  created_at: String!
+  updated_at: String!
+
+  symbol: String!
+  price: Float!
+  quantity: Float!
+  side: OrderSide!
+  type: OrderType!
+  status: OrderStatus!
+  memo: String!
 }
 
 type SpotOrderEvent {
@@ -1580,8 +1701,8 @@ type WalletEvents {
   paginator: PagePaginator
 }
 
-type SpotOrderEvents {
-  data: [SpotOrderEvent]!
+type SpotOrders {
+  data: [SpotOrder]!
   paginator: PagePaginator
 }
 
@@ -1627,7 +1748,8 @@ type Query {
 
   depositOrder(id: String!): DepositOrder!
 
-  spotOrderEvents(page: Int64, limit: Int64,  filter: SpotOrderEventFilter): SpotOrderEvents
+  spotOrders(page: Int64, limit: Int64,  filter: SpotOrderFilter): SpotOrders
+  spotOrderEvents(order_id: String!): [SpotOrderEvent]!
 
   spotPositions(page: Int64, limit: Int64, symbol: String): SpotPositions
   spotPositionClosed(page: Int64, limit: Int64, symbol: String): SpotPositionCloseds
@@ -1639,7 +1761,6 @@ type Subscription {
   trade(symbol: String): TradeStream!
   notify: Any!
 }
-
 `, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -1735,6 +1856,21 @@ func (ec *executionContext) field_Query_posts_args(ctx context.Context, rawArgs 
 func (ec *executionContext) field_Query_spotOrderEvents_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["order_id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("order_id"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["order_id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_spotOrders_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
 	var arg0 *int64
 	if tmp, ok := rawArgs["page"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("page"))
@@ -1753,10 +1889,10 @@ func (ec *executionContext) field_Query_spotOrderEvents_args(ctx context.Context
 		}
 	}
 	args["limit"] = arg1
-	var arg2 *model.SpotOrderEventFilter
+	var arg2 *model.SpotOrderFilter
 	if tmp, ok := rawArgs["filter"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
-		arg2, err = ec.unmarshalOSpotOrderEventFilter2ᚖmiddlewareᚋgraphᚋmodelᚐSpotOrderEventFilter(ctx, tmp)
+		arg2, err = ec.unmarshalOSpotOrderFilter2ᚖmiddlewareᚋgraphᚋmodelᚐSpotOrderFilter(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -4837,6 +4973,64 @@ func (ec *executionContext) fieldContext_Query_depositOrder(ctx context.Context,
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_spotOrders(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_spotOrders(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().SpotOrders(rctx, fc.Args["page"].(*int64), fc.Args["limit"].(*int64), fc.Args["filter"].(*model.SpotOrderFilter))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.SpotOrders)
+	fc.Result = res
+	return ec.marshalOSpotOrders2ᚖmiddlewareᚋgraphᚋmodelᚐSpotOrders(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_spotOrders(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "data":
+				return ec.fieldContext_SpotOrders_data(ctx, field)
+			case "paginator":
+				return ec.fieldContext_SpotOrders_paginator(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SpotOrders", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_spotOrders_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_spotOrderEvents(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_spotOrderEvents(ctx, field)
 	if err != nil {
@@ -4851,18 +5045,21 @@ func (ec *executionContext) _Query_spotOrderEvents(ctx context.Context, field gr
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().SpotOrderEvents(rctx, fc.Args["page"].(*int64), fc.Args["limit"].(*int64), fc.Args["filter"].(*model.SpotOrderEventFilter))
+		return ec.resolvers.Query().SpotOrderEvents(rctx, fc.Args["order_id"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.SpotOrderEvents)
+	res := resTmp.([]*model.SpotOrderEvent)
 	fc.Result = res
-	return ec.marshalOSpotOrderEvents2ᚖmiddlewareᚋgraphᚋmodelᚐSpotOrderEvents(ctx, field.Selections, res)
+	return ec.marshalNSpotOrderEvent2ᚕᚖmiddlewareᚋgraphᚋmodelᚐSpotOrderEvent(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_spotOrderEvents(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4873,12 +5070,28 @@ func (ec *executionContext) fieldContext_Query_spotOrderEvents(ctx context.Conte
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "data":
-				return ec.fieldContext_SpotOrderEvents_data(ctx, field)
-			case "paginator":
-				return ec.fieldContext_SpotOrderEvents_paginator(ctx, field)
+			case "user_id":
+				return ec.fieldContext_SpotOrderEvent_user_id(ctx, field)
+			case "order_id":
+				return ec.fieldContext_SpotOrderEvent_order_id(ctx, field)
+			case "time":
+				return ec.fieldContext_SpotOrderEvent_time(ctx, field)
+			case "symbol":
+				return ec.fieldContext_SpotOrderEvent_symbol(ctx, field)
+			case "quantity":
+				return ec.fieldContext_SpotOrderEvent_quantity(ctx, field)
+			case "side":
+				return ec.fieldContext_SpotOrderEvent_side(ctx, field)
+			case "type":
+				return ec.fieldContext_SpotOrderEvent_type(ctx, field)
+			case "status":
+				return ec.fieldContext_SpotOrderEvent_status(ctx, field)
+			case "price":
+				return ec.fieldContext_SpotOrderEvent_price(ctx, field)
+			case "memo":
+				return ec.fieldContext_SpotOrderEvent_memo(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type SpotOrderEvents", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type SpotOrderEvent", field.Name)
 		},
 	}
 	defer func() {
@@ -5135,6 +5348,490 @@ func (ec *executionContext) fieldContext_Query___schema(ctx context.Context, fie
 				return ec.fieldContext___Schema_directives(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Schema", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SpotOrder_id(ctx context.Context, field graphql.CollectedField, obj *model.SpotOrder) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SpotOrder_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SpotOrder_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SpotOrder",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SpotOrder_user_id(ctx context.Context, field graphql.CollectedField, obj *model.SpotOrder) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SpotOrder_user_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UserID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SpotOrder_user_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SpotOrder",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SpotOrder_created_at(ctx context.Context, field graphql.CollectedField, obj *model.SpotOrder) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SpotOrder_created_at(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SpotOrder_created_at(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SpotOrder",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SpotOrder_updated_at(ctx context.Context, field graphql.CollectedField, obj *model.SpotOrder) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SpotOrder_updated_at(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UpdatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SpotOrder_updated_at(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SpotOrder",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SpotOrder_symbol(ctx context.Context, field graphql.CollectedField, obj *model.SpotOrder) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SpotOrder_symbol(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Symbol, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SpotOrder_symbol(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SpotOrder",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SpotOrder_price(ctx context.Context, field graphql.CollectedField, obj *model.SpotOrder) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SpotOrder_price(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Price, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SpotOrder_price(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SpotOrder",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SpotOrder_quantity(ctx context.Context, field graphql.CollectedField, obj *model.SpotOrder) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SpotOrder_quantity(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Quantity, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SpotOrder_quantity(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SpotOrder",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SpotOrder_side(ctx context.Context, field graphql.CollectedField, obj *model.SpotOrder) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SpotOrder_side(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Side, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.OrderSide)
+	fc.Result = res
+	return ec.marshalNOrderSide2middlewareᚋgraphᚋmodelᚐOrderSide(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SpotOrder_side(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SpotOrder",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type OrderSide does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SpotOrder_type(ctx context.Context, field graphql.CollectedField, obj *model.SpotOrder) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SpotOrder_type(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Type, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.OrderType)
+	fc.Result = res
+	return ec.marshalNOrderType2middlewareᚋgraphᚋmodelᚐOrderType(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SpotOrder_type(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SpotOrder",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type OrderType does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SpotOrder_status(ctx context.Context, field graphql.CollectedField, obj *model.SpotOrder) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SpotOrder_status(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Status, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.OrderStatus)
+	fc.Result = res
+	return ec.marshalNOrderStatus2middlewareᚋgraphᚋmodelᚐOrderStatus(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SpotOrder_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SpotOrder",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type OrderStatus does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SpotOrder_memo(ctx context.Context, field graphql.CollectedField, obj *model.SpotOrder) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SpotOrder_memo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Memo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SpotOrder_memo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SpotOrder",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -5580,8 +6277,8 @@ func (ec *executionContext) fieldContext_SpotOrderEvent_memo(ctx context.Context
 	return fc, nil
 }
 
-func (ec *executionContext) _SpotOrderEvents_data(ctx context.Context, field graphql.CollectedField, obj *model.SpotOrderEvents) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SpotOrderEvents_data(ctx, field)
+func (ec *executionContext) _SpotOrders_data(ctx context.Context, field graphql.CollectedField, obj *model.SpotOrders) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SpotOrders_data(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -5606,48 +6303,50 @@ func (ec *executionContext) _SpotOrderEvents_data(ctx context.Context, field gra
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.SpotOrderEvent)
+	res := resTmp.([]*model.SpotOrder)
 	fc.Result = res
-	return ec.marshalNSpotOrderEvent2ᚕᚖmiddlewareᚋgraphᚋmodelᚐSpotOrderEvent(ctx, field.Selections, res)
+	return ec.marshalNSpotOrder2ᚕᚖmiddlewareᚋgraphᚋmodelᚐSpotOrder(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SpotOrderEvents_data(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SpotOrders_data(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "SpotOrderEvents",
+		Object:     "SpotOrders",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "id":
+				return ec.fieldContext_SpotOrder_id(ctx, field)
 			case "user_id":
-				return ec.fieldContext_SpotOrderEvent_user_id(ctx, field)
-			case "order_id":
-				return ec.fieldContext_SpotOrderEvent_order_id(ctx, field)
-			case "time":
-				return ec.fieldContext_SpotOrderEvent_time(ctx, field)
+				return ec.fieldContext_SpotOrder_user_id(ctx, field)
+			case "created_at":
+				return ec.fieldContext_SpotOrder_created_at(ctx, field)
+			case "updated_at":
+				return ec.fieldContext_SpotOrder_updated_at(ctx, field)
 			case "symbol":
-				return ec.fieldContext_SpotOrderEvent_symbol(ctx, field)
-			case "quantity":
-				return ec.fieldContext_SpotOrderEvent_quantity(ctx, field)
-			case "side":
-				return ec.fieldContext_SpotOrderEvent_side(ctx, field)
-			case "type":
-				return ec.fieldContext_SpotOrderEvent_type(ctx, field)
-			case "status":
-				return ec.fieldContext_SpotOrderEvent_status(ctx, field)
+				return ec.fieldContext_SpotOrder_symbol(ctx, field)
 			case "price":
-				return ec.fieldContext_SpotOrderEvent_price(ctx, field)
+				return ec.fieldContext_SpotOrder_price(ctx, field)
+			case "quantity":
+				return ec.fieldContext_SpotOrder_quantity(ctx, field)
+			case "side":
+				return ec.fieldContext_SpotOrder_side(ctx, field)
+			case "type":
+				return ec.fieldContext_SpotOrder_type(ctx, field)
+			case "status":
+				return ec.fieldContext_SpotOrder_status(ctx, field)
 			case "memo":
-				return ec.fieldContext_SpotOrderEvent_memo(ctx, field)
+				return ec.fieldContext_SpotOrder_memo(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type SpotOrderEvent", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type SpotOrder", field.Name)
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _SpotOrderEvents_paginator(ctx context.Context, field graphql.CollectedField, obj *model.SpotOrderEvents) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SpotOrderEvents_paginator(ctx, field)
+func (ec *executionContext) _SpotOrders_paginator(ctx context.Context, field graphql.CollectedField, obj *model.SpotOrders) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SpotOrders_paginator(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -5674,9 +6373,9 @@ func (ec *executionContext) _SpotOrderEvents_paginator(ctx context.Context, fiel
 	return ec.marshalOPagePaginator2ᚖmiddlewareᚋgraphᚋmodelᚐPagePaginator(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SpotOrderEvents_paginator(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SpotOrders_paginator(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "SpotOrderEvents",
+		Object:     "SpotOrders",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -9993,8 +10692,8 @@ func (ec *executionContext) fieldContext___Type_specifiedByURL(ctx context.Conte
 
 // region    **************************** input.gotpl *****************************
 
-func (ec *executionContext) unmarshalInputSpotOrderEventFilter(ctx context.Context, obj interface{}) (model.SpotOrderEventFilter, error) {
-	var it model.SpotOrderEventFilter
+func (ec *executionContext) unmarshalInputSpotOrderFilter(ctx context.Context, obj interface{}) (model.SpotOrderFilter, error) {
+	var it model.SpotOrderFilter
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
@@ -11034,6 +11733,25 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "spotOrders":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_spotOrders(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "spotOrderEvents":
 			field := field
 
@@ -11044,6 +11762,9 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_spotOrderEvents(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
@@ -11099,6 +11820,95 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___schema(ctx, field)
 			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var spotOrderImplementors = []string{"SpotOrder"}
+
+func (ec *executionContext) _SpotOrder(ctx context.Context, sel ast.SelectionSet, obj *model.SpotOrder) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, spotOrderImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SpotOrder")
+		case "id":
+			out.Values[i] = ec._SpotOrder_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "user_id":
+			out.Values[i] = ec._SpotOrder_user_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "created_at":
+			out.Values[i] = ec._SpotOrder_created_at(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updated_at":
+			out.Values[i] = ec._SpotOrder_updated_at(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "symbol":
+			out.Values[i] = ec._SpotOrder_symbol(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "price":
+			out.Values[i] = ec._SpotOrder_price(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "quantity":
+			out.Values[i] = ec._SpotOrder_quantity(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "side":
+			out.Values[i] = ec._SpotOrder_side(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "type":
+			out.Values[i] = ec._SpotOrder_type(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "status":
+			out.Values[i] = ec._SpotOrder_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "memo":
+			out.Values[i] = ec._SpotOrder_memo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -11206,24 +12016,24 @@ func (ec *executionContext) _SpotOrderEvent(ctx context.Context, sel ast.Selecti
 	return out
 }
 
-var spotOrderEventsImplementors = []string{"SpotOrderEvents"}
+var spotOrdersImplementors = []string{"SpotOrders"}
 
-func (ec *executionContext) _SpotOrderEvents(ctx context.Context, sel ast.SelectionSet, obj *model.SpotOrderEvents) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, spotOrderEventsImplementors)
+func (ec *executionContext) _SpotOrders(ctx context.Context, sel ast.SelectionSet, obj *model.SpotOrders) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, spotOrdersImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("SpotOrderEvents")
+			out.Values[i] = graphql.MarshalString("SpotOrders")
 		case "data":
-			out.Values[i] = ec._SpotOrderEvents_data(ctx, field, obj)
+			out.Values[i] = ec._SpotOrders_data(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
 		case "paginator":
-			out.Values[i] = ec._SpotOrderEvents_paginator(ctx, field, obj)
+			out.Values[i] = ec._SpotOrders_paginator(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -12442,6 +13252,44 @@ func (ec *executionContext) marshalNPost2ᚖmiddlewareᚋgraphᚋmodelᚐPost(ct
 	return ec._Post(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNSpotOrder2ᚕᚖmiddlewareᚋgraphᚋmodelᚐSpotOrder(ctx context.Context, sel ast.SelectionSet, v []*model.SpotOrder) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOSpotOrder2ᚖmiddlewareᚋgraphᚋmodelᚐSpotOrder(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
+}
+
 func (ec *executionContext) marshalNSpotOrderEvent2ᚕᚖmiddlewareᚋgraphᚋmodelᚐSpotOrderEvent(ctx context.Context, sel ast.SelectionSet, v []*model.SpotOrderEvent) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -13067,6 +13915,13 @@ func (ec *executionContext) marshalOPosts2ᚖmiddlewareᚋgraphᚋmodelᚐPosts(
 	return ec._Posts(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalOSpotOrder2ᚖmiddlewareᚋgraphᚋmodelᚐSpotOrder(ctx context.Context, sel ast.SelectionSet, v *model.SpotOrder) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._SpotOrder(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalOSpotOrderEvent2ᚖmiddlewareᚋgraphᚋmodelᚐSpotOrderEvent(ctx context.Context, sel ast.SelectionSet, v *model.SpotOrderEvent) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -13074,19 +13929,19 @@ func (ec *executionContext) marshalOSpotOrderEvent2ᚖmiddlewareᚋgraphᚋmodel
 	return ec._SpotOrderEvent(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOSpotOrderEventFilter2ᚖmiddlewareᚋgraphᚋmodelᚐSpotOrderEventFilter(ctx context.Context, v interface{}) (*model.SpotOrderEventFilter, error) {
+func (ec *executionContext) unmarshalOSpotOrderFilter2ᚖmiddlewareᚋgraphᚋmodelᚐSpotOrderFilter(ctx context.Context, v interface{}) (*model.SpotOrderFilter, error) {
 	if v == nil {
 		return nil, nil
 	}
-	res, err := ec.unmarshalInputSpotOrderEventFilter(ctx, v)
+	res, err := ec.unmarshalInputSpotOrderFilter(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOSpotOrderEvents2ᚖmiddlewareᚋgraphᚋmodelᚐSpotOrderEvents(ctx context.Context, sel ast.SelectionSet, v *model.SpotOrderEvents) graphql.Marshaler {
+func (ec *executionContext) marshalOSpotOrders2ᚖmiddlewareᚋgraphᚋmodelᚐSpotOrders(ctx context.Context, sel ast.SelectionSet, v *model.SpotOrders) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return ec._SpotOrderEvents(ctx, sel, v)
+	return ec._SpotOrders(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOSpotPosition2ᚖmiddlewareᚋgraphᚋmodelᚐSpotPosition(ctx context.Context, sel ast.SelectionSet, v *model.SpotPosition) graphql.Marshaler {

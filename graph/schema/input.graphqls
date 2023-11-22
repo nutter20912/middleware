@@ -4,7 +4,7 @@ input WalletEventFilter {
   end_date: String!
 }
 
-input SpotOrderEventFilter {
+input SpotOrderFilter {
   start_date: String!
   end_date: String!
 }

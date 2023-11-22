@@ -99,6 +99,21 @@ enum OrderStatus {
   REJECTED
 }
 
+type SpotOrder {
+  id: ID!
+  user_id: ID!
+  created_at: String!
+  updated_at: String!
+
+  symbol: String!
+  price: Float!
+  quantity: Float!
+  side: OrderSide!
+  type: OrderType!
+  status: OrderStatus!
+  memo: String!
+}
+
 type SpotOrderEvent {
   user_id: ID!
   order_id: ID!

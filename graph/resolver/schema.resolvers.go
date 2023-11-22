@@ -145,7 +145,7 @@ func (r *queryResolver) WalletEvents(ctx context.Context, page *int64, limit *in
 		req.Page = page
 	}
 
-	if page != nil {
+	if limit != nil {
 		req.Limit = limit
 	}
 
@@ -192,20 +192,43 @@ func (r *queryResolver) DepositOrder(ctx context.Context, id string) (*model.Dep
 	return order, nil
 }
 
-// SpotOrderEvents is the resolver for the spotOrderEvents field.
-func (r *queryResolver) SpotOrderEvents(ctx context.Context, page *int64, limit *int64, filter *model.SpotOrderEventFilter) (*model.SpotOrderEvents, error) {
-	req := orderV1.GetSpotEventRequest{
+// SpotOrder is the resolver for the spotOrder field.
+func (r *queryResolver) SpotOrders(ctx context.Context, page *int64, limit *int64, filter *model.SpotOrderFilter) (*model.SpotOrders, error) {
+	req := orderV1.GetSpotRequest{
 		StartDate: filter.StartDate,
 		EndDate:   filter.EndDate,
 	}
-
 	if page != nil {
 		req.Page = page
 	}
 
-	if page != nil {
+	if limit != nil {
 		req.Limit = limit
 	}
+	rsp, err := grpc.NewOrderServiceClient().GetSpot(ctx, &req)
+	if err != nil {
+		return nil, err
+	}
+
+	var data []*model.SpotOrder
+	dataBytes, _ := json.Marshal(rsp.Data)
+	json.Unmarshal(dataBytes, &data)
+
+	var paginator *model.PagePaginator
+	bytes, _ := json.Marshal(rsp.Paginator)
+	json.Unmarshal(bytes, &paginator)
+
+	response := model.SpotOrders{
+		Data:      data,
+		Paginator: paginator,
+	}
+
+	return &response, nil
+}
+
+// SpotOrderEvents is the resolver for the spotOrderEvents field.
+func (r *queryResolver) SpotOrderEvents(ctx context.Context, orderID string) ([]*model.SpotOrderEvent, error) {
+	req := orderV1.GetSpotEventRequest{OrderId: orderID}
 
 	rsp, err := grpc.NewOrderServiceClient().GetSpotEvent(ctx, &req)
 	if err != nil {
@@ -216,16 +239,7 @@ func (r *queryResolver) SpotOrderEvents(ctx context.Context, page *int64, limit 
 	dataBytes, _ := json.Marshal(rsp.Data)
 	json.Unmarshal(dataBytes, &data)
 
-	var paginator *model.PagePaginator
-	bytes, _ := json.Marshal(rsp.Paginator)
-	json.Unmarshal(bytes, &paginator)
-
-	response := model.SpotOrderEvents{
-		Data:      data,
-		Paginator: paginator,
-	}
-
-	return &response, nil
+	return data, nil
 }
 
 // SpotPositions is the resolver for the spotPositions field.
