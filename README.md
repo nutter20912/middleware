@@ -13,6 +13,26 @@
 - [go-delve/delve](https://github.com/go-delve/delve)
 
 ---
+## Setup
+### Config
+
+- generate local env file
+    ```=bash
+    cp .env.example .env
+    ```
+
+- configuration
+    ```
+    ./config
+    ├── app.yaml
+    ```
+
+- override yaml config
+    ```
+    #app.port
+    APP_PORT=1234
+    ```
+---
 ### Develop
 1. Define schema
     ```
