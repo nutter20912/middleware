@@ -19,7 +19,7 @@ type Query {
   spotOrderEvents(order_id: String!): [SpotOrderEvent]!
 
   spotPositions(page: Int64, limit: Int64, symbol: String!): SpotPositions
-  spotPositionClosed(page: Int64, limit: Int64, symbol: String!): SpotPositionCloseds
+  spotPositionClosed(page: Int64, limit: Int64, filter: SpotPositionClosedFilter!): SpotPositionCloseds
 }
 
 type Subscription {

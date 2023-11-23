@@ -3,6 +3,7 @@ package grpc
 import (
 	"context"
 	"fmt"
+	_ "middleware/config"
 	boardV1 "middleware/proto/board/v1"
 	marketV1 "middleware/proto/market/v1"
 	notifyV1 "middleware/proto/notify/v1"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/go-micro/plugins/v4/client/grpc"
 	"github.com/go-micro/plugins/v4/registry/consul"
+	"github.com/spf13/viper"
 	"go-micro.dev/v4"
 	"go-micro.dev/v4/client"
 	"go-micro.dev/v4/metadata"
@@ -24,16 +26,13 @@ type authWrapper struct {
 }
 
 var (
-	USER_SERVICE_NAME   = "srv.user"
-	BOARD_SERVICE_NAME  = "srv.board"
-	WALLET_SERVICE_NAME = "srv.wallet"
-	ORDER_SERVICE_NAME  = "srv.order"
-	MARKET_SERVICE_NAME = "srv.market"
-	NOTIFY_SERVICE_NAME = "srv.notify"
-)
-
-var (
-	service micro.Service
+	USER_SERVICE_NAME   = viper.GetString("grpc.service.user.name")
+	BOARD_SERVICE_NAME  = viper.GetString("grpc.service.board.name")
+	WALLET_SERVICE_NAME = viper.GetString("grpc.service.wallet.name")
+	ORDER_SERVICE_NAME  = viper.GetString("grpc.service.order.name")
+	MARKET_SERVICE_NAME = viper.GetString("grpc.service.market.name")
+	NOTIFY_SERVICE_NAME = viper.GetString("grpc.service.notify.name")
+	service             micro.Service
 )
 
 func init() {

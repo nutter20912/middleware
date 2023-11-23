@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	_ "middleware/config"
 	"middleware/graph/loaders"
 	"middleware/graph/resolver"
 	"middleware/wrapper"
@@ -16,6 +17,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/gorilla/websocket"
+	"github.com/spf13/viper"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 
 	"github.com/gin-contrib/cors"
@@ -23,8 +25,6 @@ import (
 	microErrors "go-micro.dev/v4/errors"
 	"go-micro.dev/v4/metadata"
 )
-
-const defaultPort = "8887"
 
 func graphqlHandler() gin.HandlerFunc {
 	srv := handler.New(resolver.NewExecutableSchema(resolver.Config{Resolvers: &resolver.Resolver{}}))
@@ -89,5 +89,8 @@ func main() {
 	r.Any("/query", graphqlHandler())
 	r.GET("/", playgroundHandler())
 
-	r.Run(fmt.Sprintf(":%v", defaultPort))
+	appPort := viper.GetInt("app.port")
+	fmt.Printf("[running]: localhost:%v\n", appPort)
+
+	r.Run(fmt.Sprintf(":%v", appPort))
 }

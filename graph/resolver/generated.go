@@ -148,7 +148,7 @@ type ComplexityRoot struct {
 		Posts              func(childComplexity int, cursor *string) int
 		SpotOrderEvents    func(childComplexity int, orderID string) int
 		SpotOrders         func(childComplexity int, page *int64, limit *int64, filter *model.SpotOrderFilter) int
-		SpotPositionClosed func(childComplexity int, page *int64, limit *int64, symbol string) int
+		SpotPositionClosed func(childComplexity int, page *int64, limit *int64, filter model.SpotPositionClosedFilter) int
 		SpotPositions      func(childComplexity int, page *int64, limit *int64, symbol string) int
 		User               func(childComplexity int) int
 		Wallet             func(childComplexity int) int
@@ -293,7 +293,7 @@ type QueryResolver interface {
 	SpotOrders(ctx context.Context, page *int64, limit *int64, filter *model.SpotOrderFilter) (*model.SpotOrders, error)
 	SpotOrderEvents(ctx context.Context, orderID string) ([]*model.SpotOrderEvent, error)
 	SpotPositions(ctx context.Context, page *int64, limit *int64, symbol string) (*model.SpotPositions, error)
-	SpotPositionClosed(ctx context.Context, page *int64, limit *int64, symbol string) (*model.SpotPositionCloseds, error)
+	SpotPositionClosed(ctx context.Context, page *int64, limit *int64, filter model.SpotPositionClosedFilter) (*model.SpotPositionCloseds, error)
 }
 type SubscriptionResolver interface {
 	Wallet(ctx context.Context, eventCursor *string) (<-chan *model.WalletStream, error)
@@ -777,7 +777,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.SpotPositionClosed(childComplexity, args["page"].(*int64), args["limit"].(*int64), args["symbol"].(string)), true
+		return e.complexity.Query.SpotPositionClosed(childComplexity, args["page"].(*int64), args["limit"].(*int64), args["filter"].(model.SpotPositionClosedFilter)), true
 
 	case "Query.spotPositions":
 		if e.complexity.Query.SpotPositions == nil {
@@ -1366,6 +1366,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	ec := executionContext{rc, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputSpotOrderFilter,
+		ec.unmarshalInputSpotPositionClosedFilter,
 		ec.unmarshalInputWalletEventFilter,
 	)
 	first := true
@@ -1475,6 +1476,12 @@ input WalletEventFilter {
 input SpotOrderFilter {
   start_date: String!
   end_date: String!
+}
+
+input SpotPositionClosedFilter {
+  start_date: String!
+  end_date: String!
+  symbol: String!
 }
 `, BuiltIn: false},
 	{Name: "../schema/resource.graphqls", Input: `scalar Uint64
@@ -1752,7 +1759,7 @@ type Query {
   spotOrderEvents(order_id: String!): [SpotOrderEvent]!
 
   spotPositions(page: Int64, limit: Int64, symbol: String!): SpotPositions
-  spotPositionClosed(page: Int64, limit: Int64, symbol: String!): SpotPositionCloseds
+  spotPositionClosed(page: Int64, limit: Int64, filter: SpotPositionClosedFilter!): SpotPositionCloseds
 }
 
 type Subscription {
@@ -1922,15 +1929,15 @@ func (ec *executionContext) field_Query_spotPositionClosed_args(ctx context.Cont
 		}
 	}
 	args["limit"] = arg1
-	var arg2 string
-	if tmp, ok := rawArgs["symbol"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("symbol"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
+	var arg2 model.SpotPositionClosedFilter
+	if tmp, ok := rawArgs["filter"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
+		arg2, err = ec.unmarshalNSpotPositionClosedFilter2middlewareᚋgraphᚋmodelᚐSpotPositionClosedFilter(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["symbol"] = arg2
+	args["filter"] = arg2
 	return args, nil
 }
 
@@ -5180,7 +5187,7 @@ func (ec *executionContext) _Query_spotPositionClosed(ctx context.Context, field
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().SpotPositionClosed(rctx, fc.Args["page"].(*int64), fc.Args["limit"].(*int64), fc.Args["symbol"].(string))
+		return ec.resolvers.Query().SpotPositionClosed(rctx, fc.Args["page"].(*int64), fc.Args["limit"].(*int64), fc.Args["filter"].(model.SpotPositionClosedFilter))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -10727,6 +10734,53 @@ func (ec *executionContext) unmarshalInputSpotOrderFilter(ctx context.Context, o
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputSpotPositionClosedFilter(ctx context.Context, obj interface{}) (model.SpotPositionClosedFilter, error) {
+	var it model.SpotPositionClosedFilter
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"start_date", "end_date", "symbol"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "start_date":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("start_date"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StartDate = data
+		case "end_date":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("end_date"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.EndDate = data
+		case "symbol":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("symbol"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Symbol = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputWalletEventFilter(ctx context.Context, obj interface{}) (model.WalletEventFilter, error) {
 	var it model.WalletEventFilter
 	asMap := map[string]interface{}{}
@@ -13396,6 +13450,11 @@ func (ec *executionContext) marshalNSpotPositionClosed2ᚕᚖmiddlewareᚋgraph�
 	wg.Wait()
 
 	return ret
+}
+
+func (ec *executionContext) unmarshalNSpotPositionClosedFilter2middlewareᚋgraphᚋmodelᚐSpotPositionClosedFilter(ctx context.Context, v interface{}) (model.SpotPositionClosedFilter, error) {
+	res, err := ec.unmarshalInputSpotPositionClosedFilter(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {

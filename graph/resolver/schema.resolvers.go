@@ -276,8 +276,11 @@ func (r *queryResolver) SpotPositions(ctx context.Context, page *int64, limit *i
 }
 
 // SpotPositionClosed is the resolver for the spotPositionClosed field.
-func (r *queryResolver) SpotPositionClosed(ctx context.Context, page *int64, limit *int64, symbol string) (*model.SpotPositionCloseds, error) {
-	req := &orderV1.GetSpotPositionClosedRequest{Symbol: symbol}
+func (r *queryResolver) SpotPositionClosed(ctx context.Context, page *int64, limit *int64, filter model.SpotPositionClosedFilter) (*model.SpotPositionCloseds, error) {
+	req := &orderV1.GetSpotPositionClosedRequest{
+		StartDate: filter.StartDate,
+		EndDate:   filter.EndDate,
+		Symbol:    filter.Symbol}
 
 	if page != nil {
 		req.Page = page
@@ -293,36 +296,18 @@ func (r *queryResolver) SpotPositionClosed(ctx context.Context, page *int64, lim
 	}
 
 	var data []*model.SpotPositionClosed
-	for _, item := range rsp.Data {
-		data = append(data, &model.SpotPositionClosed{
-			ID:          item.Id,
-			UserID:      item.UserId,
-			CreatedAt:   item.CreatedAt,
-			Symbol:      item.Symbol,
-			Quantity:    item.Quantity,
-			OpenOrderID: item.OpenOrderId,
-			OpenPrice:   item.OpenPrice,
-			OpenFee:     item.OpenFee,
-
-			CloseOrderID: item.CloseOrderId,
-			ClosePrice:   item.ClosePrice,
-			CloseFee:     item.CloseFee,
-
-			Side: model.OrderSide(
-				strings.TrimPrefix(item.Side.String(), "ORDER_SIDE_"),
-			),
-		})
-	}
+	dataBytes, _ := json.Marshal(rsp.Data)
+	json.Unmarshal(dataBytes, &data)
 
 	var paginator *model.PagePaginator
 	bytes, _ := json.Marshal(rsp.Paginator)
 	json.Unmarshal(bytes, &paginator)
 
-	spotPositionCloseds := &model.SpotPositionCloseds{
+	response := &model.SpotPositionCloseds{
 		Data:      data,
 		Paginator: paginator}
 
-	return spotPositionCloseds, nil
+	return response, nil
 }
 
 // Wallet is the resolver for the wallet field.

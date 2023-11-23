@@ -1,0 +1,17 @@
+app:
+  port: 8887
+
+grpc:
+  service:
+    user:
+      name: srv.user
+    board:
+      name: srv.board
+    wallet:
+      name: srv.wallet
+    order:
+      name: srv.order
+    market:
+      name: srv.market
+    notify:
+      name: srv.notify

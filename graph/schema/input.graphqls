@@ -8,3 +8,9 @@ input SpotOrderFilter {
   start_date: String!
   end_date: String!
 }
+
+input SpotPositionClosedFilter {
+  start_date: String!
+  end_date: String!
+  symbol: String!
+}

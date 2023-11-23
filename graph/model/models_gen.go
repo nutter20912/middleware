@@ -102,6 +102,12 @@ type SpotOrders struct {
 	Paginator *PagePaginator `json:"paginator,omitempty"`
 }
 
+type SpotPositionClosedFilter struct {
+	StartDate string `json:"start_date"`
+	EndDate   string `json:"end_date"`
+	Symbol    string `json:"symbol"`
+}
+
 type SpotPositionCloseds struct {
 	Data      []*SpotPositionClosed `json:"data"`
 	Paginator *PagePaginator        `json:"paginator,omitempty"`
