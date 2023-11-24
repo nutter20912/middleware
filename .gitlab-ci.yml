@@ -10,9 +10,9 @@ stages:
 
 build-image:
   stage: build
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    - if: $CI_COMMIT_BRANCH == "main"
+  only:
+    - main
+    - merge_requests
   variables:
     GIT_SUBMODULE_STRATEGY: recursive
     GIT_SUBMODULE_FORCE_HTTPS: "true"
