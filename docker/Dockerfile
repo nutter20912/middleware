@@ -38,7 +38,7 @@ FROM scratch AS image
 WORKDIR /app
 
 COPY --from=builder /app/middleware ./main
-COPY --from=builder /app/.env .
+COPY --from=builder /app/.env.example ./.env
 COPY --from=builder /app/config/*.yaml ./config/
 
 ENTRYPOINT ["./main"]
