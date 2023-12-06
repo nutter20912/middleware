@@ -5,8 +5,10 @@ import (
 	"errors"
 	"fmt"
 	_ "middleware/config"
+	"middleware/graph/extensions"
 	"middleware/graph/loaders"
 	"middleware/graph/resolver"
+	"middleware/otel"
 	"middleware/wrapper"
 	"net/http"
 
@@ -45,6 +47,7 @@ func graphqlHandler() gin.HandlerFunc {
 	srv.AddTransport(transport.POST{})
 	srv.AddTransport(transport.MultipartForm{})
 	srv.SetQueryCache(lru.New(1000))
+	srv.Use(extensions.NewTracer())
 	srv.Use(extension.Introspection{})
 	srv.Use(extension.AutomaticPersistedQuery{Cache: lru.New(100)})
 
@@ -76,12 +79,18 @@ func playgroundHandler() gin.HandlerFunc {
 }
 
 func main() {
+	_, err := otel.SetupGlobalOTelSDK(context.Background(), "srv.middleware", "0.1.0")
+	if err != nil {
+		fmt.Println(err)
+	}
+
 	r := gin.Default()
 
 	config := cors.DefaultConfig()
 	config.AllowAllOrigins = true
 	config.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization"}
 
+	r.Use(wrapper.TracerMiddleware())
 	r.Use(cors.New(config))
 	r.Use(wrapper.GinContextToContextMiddleware())
 	r.Use(loaders.Middleware())

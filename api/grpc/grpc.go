@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	_ "middleware/config"
+	"middleware/logging"
 	boardV1 "middleware/proto/board/v1"
 	marketV1 "middleware/proto/market/v1"
 	notifyV1 "middleware/proto/notify/v1"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/go-micro/plugins/v4/client/grpc"
 	"github.com/go-micro/plugins/v4/registry/consul"
+	"github.com/go-micro/plugins/v4/wrapper/trace/opentelemetry"
 	"github.com/spf13/viper"
 	"go-micro.dev/v4"
 	"go-micro.dev/v4/client"
@@ -40,27 +42,37 @@ func init() {
 	s := micro.NewService(
 		micro.Name("User.Client"),
 		micro.Registry(re),
-		micro.WrapClient(func(c client.Client) client.Client {
-			return &authWrapper{grpc.NewClient()}
-		}),
-	)
+		micro.WrapClient(
+			opentelemetry.NewClientWrapper(),
+			newAuthWrapper(),
+		))
+
 	s.Init()
 
 	service = s
 }
 
+func newAuthWrapper() client.Wrapper {
+	return func(c client.Client) client.Client {
+		return &authWrapper{grpc.NewClient()}
+	}
+}
+
 func (a *authWrapper) Call(
 	ctx context.Context,
-	req client.Request, rsp interface{},
+	req client.Request,
+	rsp interface{},
 	opts ...client.CallOption,
-) error {
+) (err error) {
 	if gc, err := wrapper.GinContextFromContext(ctx); err == nil {
 		ctx = metadata.Set(ctx, "Authorization", gc.Request.Header.Get("Authorization"))
 	} else {
 		fmt.Println(err.Error())
 	}
 
-	return a.Client.Call(ctx, req, rsp)
+	defer logging.ClientRequestLog(ctx, req, rsp)
+
+	return a.Client.Call(ctx, req, rsp, opts...)
 }
 
 func NewUserServiceClient() userV1.UserService {
