@@ -3,15 +3,31 @@ package logging
 import (
 	"context"
 	"encoding/json"
+	"net/http"
 
 	"go-micro.dev/v4/client"
 	"go-micro.dev/v4/metadata"
 	"go.opentelemetry.io/otel/attribute"
+	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
 	"go.opentelemetry.io/otel/trace"
 )
 
-func RequestLog() {
+func RequestLog(ctx context.Context, req *http.Request) {
+	span := trace.SpanFromContext(ctx)
 
+	attrs := []attribute.KeyValue{
+		semconv.HTTPURL(req.URL.String()),
+		semconv.HTTPMethod(req.Method),
+		semconv.ClientAddress(req.RemoteAddr)}
+
+	span.SetAttributes(attrs...)
+
+	payload, _ := json.Marshal(map[string]interface{}{
+		"header": req.Header,
+	})
+
+	span.AddEvent("request", trace.WithAttributes(
+		attribute.String("payload", string(payload))))
 }
 
 func ClientRequestLog(ctx context.Context, req client.Request, rsp interface{}) {
