@@ -22,7 +22,8 @@ build-image:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   script:
     - echo $IMAGE_TAG
-    - echo $IMAGE_NAME
+    - echo $CI_REGISTRY_IMAGE:latest
     - docker build --target=image -f=docker/Dockerfile -t=$IMAGE_TAG .
     - docker tag $IMAGE_TAG $CI_REGISTRY_IMAGE:latest
-    - docker push --all-tags $CI_REGISTRY_IMAGE
+    - docker images
+    - docker push -a $CI_REGISTRY_IMAGE
