@@ -100,6 +100,7 @@ func main() {
 
 	appPort := viper.GetInt("app.port")
 	fmt.Printf("[running]: localhost:%v\n", appPort)
+	fmt.Println("test")
 
 	r.Run(fmt.Sprintf(":%v", appPort))
 }
